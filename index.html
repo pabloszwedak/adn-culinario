@@ -19,15 +19,28 @@
 
 <div class="container">
     <h1>🍳 ADN Culinario</h1>
-    <p>Guarda una nueva receta en la nube:</p>
-    <input type="text" id="nombreReceta" placeholder="Nombre de la receta (ej. Paella de la Abuela)">
-    <input type="text" id="ingrediente" placeholder="Ingrediente principal">
+    <p style="text-align: center; font-size: 0.9em; color: #a3442d;">HU1: REGISTRO TÉCNICO DE INGREDIENTES</p>
+    
+    <input type="text" id="nombreReceta" placeholder="Nombre de la receta (ej. Arroz Prohibido)">
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <input type="number" id="cantidad" placeholder="Cant." style="flex: 1;" min="0.1" step="0.1">
+        <select id="unidad" style="flex: 1; padding: 10px; border: 1px solid #fed7aa; border-radius: 8px; background: white;">
+            <option value="g">Gramos (g)</option>
+            <option value="ml">Mililitros (ml)</option>
+            <option value="ud">Unidades (ud)</option>
+            <option value="oz">Onzas (oz)</option>
+        </select>
+        <input type="text" id="ingredienteNombre" placeholder="Ingrediente" style="flex: 2;">
+    </div>
+    
     <button onclick="guardarReceta()">Guardar en el Legado</button>
     <div id="mensaje"></div>
-	<div id="lista-recetas" style="margin-top: 30px; border-top: 2px solid #fed7aa; padding-top: 20px;">
-		<h2 style="color: #f97316; text-align: center;">📖 El Legado Familiar</h2>
-		<div id="grid-recetas"></div>
-	</div>
+
+    <div id="lista-recetas" style="margin-top: 30px; border-top: 2px solid #fed7aa; padding-top: 20px;">
+        <h2 style="color: #f97316; text-align: center;">📖 El Legado Familiar</h2>
+        <div id="grid-recetas"></div>
+    </div>
 </div>
 <script>
     const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
@@ -68,37 +81,43 @@
 
     // HU1: Función para guardar
     async function guardarReceta() {
-        const nombre = document.getElementById('nombreReceta').value;
-        const ingrediente = document.getElementById('ingrediente').value;
-        const mensajeDiv = document.getElementById('mensaje');
+		const nombre = document.getElementById('nombreReceta').value;
+		const cant = parseFloat(document.getElementById('cantidad').value);
+		const uni = document.getElementById('unidad').value;
+		const ingName = document.getElementById('ingredienteNombre').value;
+		const mensajeDiv = document.getElementById('mensaje');
 
-        if (!nombre || !ingrediente) {
-            mensajeDiv.innerHTML = "<span style='color:red;'>⚠️ Faltan datos técnicos.</span>";
-            return;
-        }
+		// AC1.1: Validación de valores positivos
+		if (!nombre || isNaN(cant) || cant <= 0 || !ingName) {
+			mensajeDiv.innerHTML = "<span style='color:red;'>⚠️ ERROR: La cantidad debe ser mayor a 0 y todos los campos son obligatorios.</span>";
+			return;
+		}
 
-        mensajeDiv.innerHTML = "⏳ Transfiriendo al ADN...";
+		mensajeDiv.innerHTML = "⏳ Transfiriendo al ADN...";
 
-        try {
-            const { error } = await supabaseClient
-                .from('recetas')
-                .insert([{ 
-                    nombre: nombre, 
-                    ingredientes: { principal: ingrediente } 
-                }]);
+		try {
+			const { error } = await supabaseClient
+				.from('recetas')
+				.insert([{ 
+					nombre: nombre, 
+					ingredientes: { 
+						cantidad: cant,
+						unidad: uni,
+						nombre: ingName
+					} 
+				}]);
 
-            if (error) throw error;
+			if (error) throw error;
 
-            mensajeDiv.innerHTML = "<span style='color:green;'>✅ Guardado en el legado.</span>";
-            document.getElementById('nombreReceta').value = '';
-            document.getElementById('ingrediente').value = '';
-            
-            // Actualización inmediata de la lista tras guardar
-            await cargarLegado(); 
-        } catch (err) {
-            mensajeDiv.innerHTML = "<span style='color:red;'>❌ Error: " + err.message + "</span>";
-        }
-    }
+			mensajeDiv.innerHTML = "<span style='color:green;'>✅ HU1: Ingrediente técnico guardado.</span>";
+			// Limpiar campos
+			document.getElementById('cantidad').value = '';
+			document.getElementById('ingredienteNombre').value = '';
+			await cargarLegado(); 
+		} catch (err) {
+			mensajeDiv.innerHTML = "<span style='color:red;'>❌ Error: " + err.message + "</span>";
+		}
+	}
 
     // Inicialización automática al abrir la web
     cargarLegado();
