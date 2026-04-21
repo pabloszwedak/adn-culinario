@@ -19,28 +19,27 @@
 
 <div class="container">
     <h1>🍳 ADN Culinario</h1>
-    <p style="text-align: center; font-size: 0.9em; color: #a3442d;">HU1: REGISTRO TÉCNICO DE INGREDIENTES</p>
+    <p style="text-align: center; font-size: 0.9em; color: #a3442d;">HU2: CONTROL DE TEMPERATURA Y TIEMPO</p>
     
-    <input type="text" id="nombreReceta" placeholder="Nombre de la receta (ej. Arroz Prohibido)">
+    <input type="text" id="nombreReceta" placeholder="Nombre de la receta">
     
     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-        <input type="number" id="cantidad" placeholder="Cant." style="flex: 1;" min="0.1" step="0.1">
-        <select id="unidad" style="flex: 1; padding: 10px; border: 1px solid #fed7aa; border-radius: 8px; background: white;">
-            <option value="g">Gramos (g)</option>
-            <option value="ml">Mililitros (ml)</option>
-            <option value="ud">Unidades (ud)</option>
-            <option value="oz">Onzas (oz)</option>
+        <input type="number" id="cantidad" placeholder="Cant." style="flex: 1;">
+        <select id="unidad" style="flex: 1; padding: 10px; border: 1px solid #fed7aa; border-radius: 8px;">
+            <option value="g">g</option>
+            <option value="ml">ml</option>
+            <option value="ud">ud</option>
         </select>
         <input type="text" id="ingredienteNombre" placeholder="Ingrediente" style="flex: 2;">
+    </div>
+
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <input type="number" id="temperatura" placeholder="Temp. (ºC)" style="flex: 1;">
+        <input type="number" id="tiempo" placeholder="Tiempo (min)" style="flex: 1;">
     </div>
     
     <button onclick="guardarReceta()">Guardar en el Legado</button>
     <div id="mensaje"></div>
-
-    <div id="lista-recetas" style="margin-top: 30px; border-top: 2px solid #fed7aa; padding-top: 20px;">
-        <h2 style="color: #f97316; text-align: center;">📖 El Legado Familiar</h2>
-        <div id="grid-recetas"></div>
-    </div>
 </div>
 <script>
     const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
@@ -85,34 +84,36 @@
 		const cant = parseFloat(document.getElementById('cantidad').value);
 		const uni = document.getElementById('unidad').value;
 		const ingName = document.getElementById('ingredienteNombre').value;
+		const temp = parseFloat(document.getElementById('temperatura').value);
+		const tiempo = parseFloat(document.getElementById('tiempo').value);
 		const mensajeDiv = document.getElementById('mensaje');
 
-		// AC1.1: Validación de valores positivos
-		if (!nombre || isNaN(cant) || cant <= 0 || !ingName) {
-			mensajeDiv.innerHTML = "<span style='color:red;'>⚠️ ERROR: La cantidad debe ser mayor a 0 y todos los campos son obligatorios.</span>";
+		// AC2.1: Obligatoriedad de magnitudes
+		if (!nombre || isNaN(cant) || !ingName || isNaN(temp) || isNaN(tiempo)) {
+			mensajeDiv.innerHTML = "<span style='color:red;'>⚠️ ERROR: Temperatura y Tiempo son obligatorios.</span>";
 			return;
 		}
 
-		mensajeDiv.innerHTML = "⏳ Transfiriendo al ADN...";
+		// AC2.2: Rango de seguridad técnica (-50 a 300)
+		if (temp < -50 || temp > 300) {
+			mensajeDiv.innerHTML = "<span style='color:red;'>⚠️ SEGURIDAD: Temperatura fuera de rango técnico (-50ºC a 300ºC).</span>";
+			return;
+		}
+
+		mensajeDiv.innerHTML = "⏳ Transfiriendo parámetros físicos...";
 
 		try {
 			const { error } = await supabaseClient
 				.from('recetas')
 				.insert([{ 
 					nombre: nombre, 
-					ingredientes: { 
-						cantidad: cant,
-						unidad: uni,
-						nombre: ingName
-					} 
+					ingredientes: { cantidad: cant, unidad: uni, nombre: ingName },
+					parametros: { temperatura: temp, tiempo: tiempo } // Nueva estructura HU2
 				}]);
 
 			if (error) throw error;
 
-			mensajeDiv.innerHTML = "<span style='color:green;'>✅ HU1: Ingrediente técnico guardado.</span>";
-			// Limpiar campos
-			document.getElementById('cantidad').value = '';
-			document.getElementById('ingredienteNombre').value = '';
+			mensajeDiv.innerHTML = "<span style='color:green;'>✅ HU2: Parámetros de precisión guardados.</span>";
 			await cargarLegado(); 
 		} catch (err) {
 			mensajeDiv.innerHTML = "<span style='color:red;'>❌ Error: " + err.message + "</span>";
