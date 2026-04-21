@@ -53,14 +53,9 @@
     // HU3: Función para leer y mostrar el legado
     async function cargarLegado() {
 		const grid = document.getElementById('grid-recetas');
-		
-		// Verificación de seguridad para evitar el error 'null'
-		if (!grid) {
-			console.warn("⚠️ El contenedor 'grid-recetas' no existe todavía en el HTML.");
-			return;
-		}
+		if (!grid) return;
 
-		grid.innerHTML = "⏳ Sincronizando...";
+		grid.innerHTML = "<p style='text-align:center;'>⏳ Sincronizando el legado...</p>";
 
 		try {
 			const { data: recetas, error } = await supabaseClient
@@ -73,24 +68,52 @@
 			grid.innerHTML = ""; 
 			recetas.forEach(receta => {
 				const card = document.createElement('div');
-				card.style.cssText = "background: #fff; border: 1px solid #fed7aa; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);";
 				
-				// Mostramos los parámetros de la HU2 si existen
-				const temp = receta.parametros?.temperatura || 'N/A';
-				const tiempo = receta.parametros?.tiempo || 'N/A';
-				const ing = receta.ingredientes?.nombre || 'Desconocido';
-				const cant = receta.ingredientes?.cantidad || '0';
-				const uni = receta.ingredientes?.unidad || '';
+				// Extracción segura de datos técnicos
+				const cant = receta.ingredientes?.cantidad || "0";
+				const uni = receta.ingredientes?.unidad || "";
+				const ing = receta.ingredientes?.nombre || "Ingrediente";
+				const temp = receta.parametros?.temperatura || "N/A";
+				const tiempo = receta.parametros?.tiempo || "N/A";
+
+				// Estilo de la Ficha Técnica
+				card.style.cssText = `
+					background: #fff; 
+					border: 2px solid #fed7aa; 
+					padding: 15px; 
+					border-radius: 12px; 
+					margin-bottom: 15px; 
+					cursor: pointer; 
+					transition: transform 0.2s, opacity 0.3s;
+					box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+				`;
+				
+				// AC3.2: Modo Ejecución (Checklist)
+				card.onclick = function() {
+					const isDone = this.style.opacity === "0.4";
+					this.style.opacity = isDone ? "1" : "0.4";
+					this.style.textDecoration = isDone ? "none" : "line-through";
+					this.style.transform = isDone ? "scale(1)" : "scale(0.98)";
+				};
 
 				card.innerHTML = `
-					<strong style="color: #ea580c;">${receta.nombre}</strong><br>
-					<small>${cant}${uni} de ${ing} | 🌡️ ${temp}ºC | ⏱️ ${tiempo} min</small>
+					<div style="font-weight: bold; color: #431407; margin-bottom: 8px; border-bottom: 1px solid #fff5ed; padding-bottom: 5px;">
+						${receta.nombre.toUpperCase()}
+					</div>
+					<div style="font-size: 1.1em; margin: 10px 0;">
+						<b style="color: #ea580c; font-size: 1.2em;">${cant}${uni}</b> 
+						<span style="color: #666; font-size: 0.9em;">de</span> 
+						<span style="font-weight: 500;">${ing}</span>
+					</div>
+					<div style="display: flex; gap: 20px; font-size: 0.9em; color: #a3442d; background: #fff5ed; padding: 5px 10px; border-radius: 8px;">
+						<span>🌡️ <b>${temp}ºC</b></span>
+						<span>⏱️ <b>${tiempo} min</b></span>
+					</div>
 				`;
 				grid.appendChild(card);
 			});
 		} catch (err) {
-			console.error("Error en HU3:", err);
-			grid.innerHTML = "❌ Error al cargar el legado.";
+			grid.innerHTML = "❌ Error en visualización técnica.";
 		}
 	}
 
