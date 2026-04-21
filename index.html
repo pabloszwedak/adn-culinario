@@ -52,60 +52,39 @@
 </div>
 
 <script>
-	let tempIngredientes = [];
-	let tempPasos = [];
+	// 1. CONFIGURACIÓN (Debe estar arriba)
+	const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
+	const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
+	const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-	const ui = {
-		agregarIngrediente() {
-			const nombre = document.getElementById('ing-nombre').value;
-			const cantidad = document.getElementById('ing-cant').value;
-			if(!nombre || !cantidad) return;
-			
-			tempIngredientes.push({ nombre, cantidad, unidad: 'g' });
-			this.renderListas();
-			document.getElementById('ing-nombre').value = "";
-			document.getElementById('ing-cant').value = "";
+	// 2. DEFINICIÓN DEL OBJETO API (Debe ser GLOBAL y estar antes de las funciones)
+	const api = {
+		async guardarRecetaCompleta(nombre, ingredientes, pasos) {
+			const { data: receta, error: rError } = await supabaseClient
+				.from('recetas')
+				.insert([{ nombre }])
+				.select().single();
+			if (rError) throw rError;
+
+			const ingData = ingredientes.map(i => ({ ...i, receta_id: receta.id }));
+			await supabaseClient.from('ingredientes').insert(ingData);
+
+			const pasosData = pasos.map((p, idx) => ({ ...p, receta_id: receta.id, orden: idx }));
+			await supabaseClient.from('pasos').insert(pasosData);
+			return receta;
 		},
-		agregarPaso() {
-			const inst = document.getElementById('paso-inst').value;
-			const temp = parseFloat(document.getElementById('paso-temp').value);
-			const tiempo = document.getElementById('paso-tiempo').value;
-
-			// VALIDACIÓN DE SEGURIDAD (Rango Físico)
-			if (temp > 300 || temp < -50) {
-				alert("⚠️ Error: Temperatura fuera de rango (Máx 300ºC)");
-				return;
-			}
-
-			if(!inst || isNaN(temp)) return;
-			
-			tempPasos.push({ instruccion: inst, temperatura: temp, tiempo });
-			this.renderListas();
-			document.getElementById('paso-inst').value = "";
-			document.getElementById('paso-temp').value = "";
-			document.getElementById('paso-tiempo').value = "";
-		},
-		renderListas() {
-			document.getElementById('lista-ingredientes-temp').innerHTML = tempIngredientes.map(i => `<div style="font-size:0.8em">🔹 ${i.cantidad}g - ${i.nombre}</div>`).join('');
-			document.getElementById('lista-pasos-temp').innerHTML = tempPasos.map(p => `<div style="font-size:0.8em">⏱️ ${p.instruccion} (${p.temperatura}ºC)</div>`).join('');
+		async obtenerTodoElLegado() {
+			const { data, error } = await supabaseClient
+				.from('recetas')
+				.select(`id, nombre, created_at, ingredientes(*), pasos(*)`)
+				.order('created_at', { ascending: false });
+			if (error) throw error;
+			return data;
 		}
 	};
 
-	// Modificar la función guardarReceta para enviar los arrays
-	async function guardarReceta() {
-		const nombre = document.getElementById('nombreReceta').value;
-		if(!nombre || tempIngredientes.length === 0) {
-			alert("Faltan datos"); return;
-		}
-		
-		try {
-			await api.guardarRecetaCompleta(nombre, tempIngredientes, tempPasos);
-			alert("✅ Legado Guardado");
-			tempIngredientes = []; tempPasos = [];
-			ui.renderListas();
-			cargarLegado();
-		} catch(e) { alert(e.message); }
-	}
+	// 3. RESTO DE FUNCIONES (ui.agregarIngrediente, guardarReceta, etc.)
+	// ...
 </script>
 </body>
 </html>
