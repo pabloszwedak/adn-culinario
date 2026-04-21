@@ -19,31 +19,38 @@
 
 <div class="container">
     <h1>🍳 ADN Culinario</h1>
-    <p style="text-align: center; font-size: 0.9em; color: #a3442d;">HU2: CONTROL DE TEMPERATURA Y TIEMPO</p>
+    <p style="text-align: center; font-size: 0.9em; color: #a3442d; background: #fed7aa; border-radius: 5px;">MODO: MVP2 - ARQUITECTURA RELACIONAL (HU4)</p>
     
-    <input type="text" id="nombreReceta" placeholder="Nombre de la receta">
+    <input type="text" id="nombreReceta" placeholder="Nombre de la Receta (Padre)">
     
-    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-        <input type="number" id="cantidad" placeholder="Cant." style="flex: 1;">
-        <select id="unidad" style="flex: 1; padding: 10px; border: 1px solid #fed7aa; border-radius: 8px;">
-            <option value="g">g</option>
-            <option value="ml">ml</option>
-            <option value="ud">ud</option>
-        </select>
-        <input type="text" id="ingredienteNombre" placeholder="Ingrediente" style="flex: 2;">
+    <div style="border: 1px dashed #f97316; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+        <p style="font-size: 0.8em; margin: 0 0 5px 0; font-weight: bold;">📦 INGREDIENTE TÉCNICO</p>
+        <div style="display: flex; gap: 5px;">
+            <input type="number" id="cantidad" placeholder="Cant." style="width: 70px;">
+            <select id="unidad" style="padding: 10px; border: 1px solid #fed7aa; border-radius: 8px;">
+                <option value="g">g</option>
+                <option value="ml">ml</option>
+                <option value="ud">ud</option>
+            </select>
+            <input type="text" id="ingredienteNombre" placeholder="Ingrediente" style="flex: 1;">
+        </div>
     </div>
 
-    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-        <input type="number" id="temperatura" placeholder="Temp. (ºC)" style="flex: 1;">
-        <input type="number" id="tiempo" placeholder="Tiempo (min)" style="flex: 1;">
+    <div style="border: 1px dashed #ea580c; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+        <p style="font-size: 0.8em; margin: 0 0 5px 0; font-weight: bold;">🔥 PARÁMETROS FÍSICOS (PASO 1)</p>
+        <div style="display: flex; gap: 5px;">
+            <input type="number" id="temperatura" placeholder="Temp. (ºC)" style="flex: 1;">
+            <input type="number" id="tiempo" placeholder="Tiempo (min)" style="flex: 1;">
+        </div>
     </div>
     
-    <button onclick="guardarReceta()">Guardar en el Legado</button>
+    <button onclick="guardarReceta()">Guardar ADN en el Legado</button>
     <div id="mensaje"></div>
 
     <div id="lista-recetas" style="margin-top: 30px; border-top: 2px solid #fed7aa; padding-top: 20px;">
-        <h2 style="color: #f97316; text-align: center; font-size: 1.2em;">📖 El Legado Familiar</h2>
-        <div id="grid-recetas"></div> </div>
+        <h2 style="color: #f97316; text-align: center; font-size: 1.2em;">📖 El Legado Familiar (Relacional)</h2>
+        <div id="grid-recetas"></div> 
+    </div>
 </div>
 <script>
 	// CONFIGURACIÓN (Mantén tus credenciales)
