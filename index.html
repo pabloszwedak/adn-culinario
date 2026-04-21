@@ -25,44 +25,51 @@
     <button onclick="guardarReceta()">Guardar en el Legado</button>
     <div id="mensaje"></div>
 </div>
-
 <script>
-    // --- CONFIGURACIÓN (REMPLAZA ESTO) ---
-    const SUPABASE_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
-    const SUPABASE_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
-    // -------------------------------------
+    // 1. Tus credenciales (Asegúrate de que la URL NO termine en /rest/v1/)
+    const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
+    const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // 2. Inicializamos con un nombre distinto para evitar el SyntaxError
+    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
+    // 3. La función de guardado
     async function guardarReceta() {
         const nombre = document.getElementById('nombreReceta').value;
         const ingrediente = document.getElementById('ingrediente').value;
         const mensajeDiv = document.getElementById('mensaje');
 
         if (!nombre || !ingrediente) {
+            mensajeDiv.style.color = "red";
             mensajeDiv.innerText = "⚠️ Por favor, rellena los campos.";
             return;
         }
 
-        mensajeDiv.innerText = "⏳ Guardando...";
+        mensajeDiv.style.color = "orange";
+        mensajeDiv.innerText = "⏳ Guardando en el ADN...";
 
-        const { data, error } = await supabase
-            .from('recetas')
-            .insert([{ 
-                nombre: nombre, 
-                ingredientes: { principal: ingrediente } 
-            }]);
+        try {
+            const { data, error } = await supabaseClient
+                .from('recetas')
+                .insert([{ 
+                    nombre: nombre, 
+                    ingredientes: { principal: ingrediente } 
+                }]);
 
-        if (error) {
-            mensajeDiv.innerText = "❌ Error: " + error.message;
-            console.error(error);
-        } else {
-            mensajeDiv.innerText = "✅ ¡Receta guardada para siempre!";
+            if (error) throw error;
+
+            mensajeDiv.style.color = "green";
+            mensajeDiv.innerText = "✅ ¡ÉXITO! Receta guardada.";
             document.getElementById('nombreReceta').value = '';
             document.getElementById('ingrediente').value = '';
+            
+            console.log("¡Dato insertado correctamente!");
+        } catch (err) {
+            mensajeDiv.style.color = "red";
+            mensajeDiv.innerText = "❌ Error: " + err.message;
+            console.error("Detalle del error:", err);
         }
     }
 </script>
-
 </body>
 </html>
