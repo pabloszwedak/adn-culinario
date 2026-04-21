@@ -46,121 +46,130 @@
         <div id="grid-recetas"></div> </div>
 </div>
 <script>
-    const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
-    const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
-    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+	// CONFIGURACIÓN (Mantén tus credenciales)
+	const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
+	const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
+	const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-    // HU3: Función para leer y mostrar el legado
-    async function cargarLegado() {
+	// --- MÓDULO API: Lógica Relacional (HU4) ---
+	const api = {
+		async guardarRecetaCompleta(nombre, ingredientes, pasos) {
+			// 1. Insertar el Padre (Receta)
+			const { data: receta, error: rError } = await supabaseClient
+				.from('recetas')
+				.insert([{ nombre }])
+				.select()
+				.single();
+
+			if (rError) throw rError;
+
+			// 2. Insertar los Hijos (Ingredientes) vinculados al ID del padre
+			const ingData = ingredientes.map(i => ({ ...i, receta_id: receta.id }));
+			const { error: iError } = await supabaseClient.from('ingredientes').insert(ingData);
+			if (iError) throw iError;
+
+			// 3. Insertar los Hijos (Pasos) vinculados al ID del padre
+			const pasosData = pasos.map((p, idx) => ({ ...p, receta_id: receta.id, orden: idx }));
+			const { error: pError } = await supabaseClient.from('pasos').insert(pasosData);
+			if (pError) throw pError;
+
+			return receta;
+		},
+
+		async obtenerTodoElLegado() {
+			// Traemos recetas con sus hijos (Left Join)
+			const { data, error } = await supabaseClient
+				.from('recetas')
+				.select(`
+					id, nombre, created_at,
+					ingredientes (nombre, cantidad, unidad),
+					pasos (instruccion, temperatura, tiempo)
+				`)
+				.order('created_at', { ascending: false });
+			
+			if (error) throw error;
+			return data;
+		}
+	};
+
+	// --- MÓDULO UI: Visualización Limpia (HU3 + HU4) ---
+	async function cargarLegado() {
 		const grid = document.getElementById('grid-recetas');
 		if (!grid) return;
-
-		grid.innerHTML = "<p style='text-align:center;'>⏳ Sincronizando el legado...</p>";
+		grid.innerHTML = "⏳ Sincronizando legado relacional...";
 
 		try {
-			const { data: recetas, error } = await supabaseClient
-				.from('recetas')
-				.select('*')
-				.order('created_at', { ascending: false });
+			const recetas = await api.obtenerTodoElLegado();
+			grid.innerHTML = "";
 
-			if (error) throw error;
-
-			grid.innerHTML = ""; 
 			recetas.forEach(receta => {
 				const card = document.createElement('div');
+				card.style.cssText = "background:#fff; border:2px solid #fed7aa; padding:15px; border-radius:12px; margin-bottom:15px; cursor:pointer;";
 				
-				// Extracción segura de datos técnicos
-				const cant = receta.ingredientes?.cantidad || "0";
-				const uni = receta.ingredientes?.unidad || "";
-				const ing = receta.ingredientes?.nombre || "Ingrediente";
-				const temp = receta.parametros?.temperatura || "N/A";
-				const tiempo = receta.parametros?.tiempo || "N/A";
-
-				// Estilo de la Ficha Técnica
-				card.style.cssText = `
-					background: #fff; 
-					border: 2px solid #fed7aa; 
-					padding: 15px; 
-					border-radius: 12px; 
-					margin-bottom: 15px; 
-					cursor: pointer; 
-					transition: transform 0.2s, opacity 0.3s;
-					box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-				`;
-				
-				// AC3.2: Modo Ejecución (Checklist)
+				// Checklist dinámico
 				card.onclick = function() {
-					const isDone = this.style.opacity === "0.4";
-					this.style.opacity = isDone ? "1" : "0.4";
-					this.style.textDecoration = isDone ? "none" : "line-through";
-					this.style.transform = isDone ? "scale(1)" : "scale(0.98)";
+					this.style.opacity = this.style.opacity === "0.4" ? "1" : "0.4";
+					this.style.textDecoration = this.style.textDecoration === "line-through" ? "none" : "line-through";
 				};
 
+				// Renderizamos la receta y sus hijos (tomando el primero de cada para esta versión)
+				const ing = receta.ingredientes[0] || {};
+				const paso = receta.pasos[0] || {};
+
 				card.innerHTML = `
-					<div style="font-weight: bold; color: #431407; margin-bottom: 8px; border-bottom: 1px solid #fff5ed; padding-bottom: 5px;">
-						${receta.nombre.toUpperCase()}
+					<div style="font-weight:bold; color:#431407;">${receta.nombre.toUpperCase()}</div>
+					<div style="margin:10px 0;">
+						<b style="color:#ea580c;">${ing.cantidad || 0}${ing.unidad || ''}</b> de ${ing.nombre || 'N/A'}
 					</div>
-					<div style="font-size: 1.1em; margin: 10px 0;">
-						<b style="color: #ea580c; font-size: 1.2em;">${cant}${uni}</b> 
-						<span style="color: #666; font-size: 0.9em;">de</span> 
-						<span style="font-weight: 500;">${ing}</span>
-					</div>
-					<div style="display: flex; gap: 20px; font-size: 0.9em; color: #a3442d; background: #fff5ed; padding: 5px 10px; border-radius: 8px;">
-						<span>🌡️ <b>${temp}ºC</b></span>
-						<span>⏱️ <b>${tiempo} min</b></span>
+					<div style="display:flex; gap:15px; font-size:0.9em; background:#fff5ed; padding:8px; border-radius:8px;">
+						<span>🌡️ <b>${paso.temperatura || 0}ºC</b></span>
+						<span>⏱️ <b>${paso.tiempo || 0} min</b></span>
 					</div>
 				`;
 				grid.appendChild(card);
 			});
 		} catch (err) {
-			grid.innerHTML = "❌ Error en visualización técnica.";
+			console.error(err);
+			grid.innerHTML = "❌ Error al cargar datos relacionales.";
 		}
 	}
 
-    // HU1: Función para guardar
-    async function guardarReceta() {
+	// --- CONTROLADOR: Orquestación de Guardado ---
+	async function guardarReceta() {
+		const msg = document.getElementById('mensaje');
 		const nombre = document.getElementById('nombreReceta').value;
-		const cant = parseFloat(document.getElementById('cantidad').value);
-		const uni = document.getElementById('unidad').value;
-		const ingName = document.getElementById('ingredienteNombre').value;
-		const temp = parseFloat(document.getElementById('temperatura').value);
-		const tiempo = parseFloat(document.getElementById('tiempo').value);
-		const mensajeDiv = document.getElementById('mensaje');
+		
+		// Captura de datos (por ahora 1 ingrediente y 1 paso por simplicidad de UI)
+		const ingrediente = {
+			nombre: document.getElementById('ingredienteNombre').value,
+			cantidad: parseFloat(document.getElementById('cantidad').value),
+			unidad: document.getElementById('unidad').value
+		};
+		
+		const paso = {
+			instruccion: "Instrucción base",
+			temperatura: parseFloat(document.getElementById('temperatura').value),
+			tiempo: parseFloat(document.getElementById('tiempo').value)
+		};
 
-		// AC2.1: Obligatoriedad de magnitudes
-		if (!nombre || isNaN(cant) || !ingName || isNaN(temp) || isNaN(tiempo)) {
-			mensajeDiv.innerHTML = "<span style='color:red;'>⚠️ ERROR: Temperatura y Tiempo son obligatorios.</span>";
+		if (!nombre || isNaN(ingrediente.cantidad) || isNaN(paso.temperatura)) {
+			msg.innerHTML = "⚠️ Faltan datos técnicos.";
 			return;
 		}
-
-		// AC2.2: Rango de seguridad técnica (-50 a 300)
-		if (temp < -50 || temp > 300) {
-			mensajeDiv.innerHTML = "<span style='color:red;'>⚠️ SEGURIDAD: Temperatura fuera de rango técnico (-50ºC a 300ºC).</span>";
-			return;
-		}
-
-		mensajeDiv.innerHTML = "⏳ Transfiriendo parámetros físicos...";
 
 		try {
-			const { error } = await supabaseClient
-				.from('recetas')
-				.insert([{ 
-					nombre: nombre, 
-					ingredientes: { cantidad: cant, unidad: uni, nombre: ingName },
-					parametros: { temperatura: temp, tiempo: tiempo } // Nueva estructura HU2
-				}]);
-
-			if (error) throw error;
-
-			mensajeDiv.innerHTML = "<span style='color:green;'>✅ HU2: Parámetros de precisión guardados.</span>";
-			await cargarLegado(); 
+			msg.innerHTML = "⏳ Generando ADN relacional...";
+			await api.guardarRecetaCompleta(nombre, [ingrediente], [paso]);
+			msg.innerHTML = "<span style='color:green;'>✅ HU4: Guardado exitoso (Relacional).</span>";
+			document.getElementById('nombreReceta').value = ""; // Limpieza (Escenario 3)
+			cargarLegado();
 		} catch (err) {
-			mensajeDiv.innerHTML = "<span style='color:red;'>❌ Error: " + err.message + "</span>";
+			msg.innerHTML = "❌ Error: " + err.message;
 		}
 	}
 
-    // Inicialización automática al abrir la web
-    cargarLegado();
+	// Inicio
+	cargarLegado();
 </script>
 </body>
 </html>
