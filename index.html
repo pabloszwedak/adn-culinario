@@ -1,19 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>ADN Culinario - Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADN Culinario - Base de Datos Activa</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background: #fff5ed; }
-        .box { border: 2px solid #f97316; padding: 20px; border-radius: 20px; display: inline-block; }
-        h1 { color: #f97316; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fff5ed; padding: 20px; color: #431407; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        h1 { color: #f97316; text-align: center; margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #fed7aa; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #f97316; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #ea580c; }
+        #mensaje { margin-top: 15px; text-align: center; font-size: 0.9em; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h1>🍳 ADN Culinario</h1>
-        <p>Si lees esto, el servidor está <b>VIVO</b>.</p>
-        <p>Estamos listos para el Paso 2.</p>
-    </div>
+
+<div class="container">
+    <h1>🍳 ADN Culinario</h1>
+    <p>Guarda una nueva receta en la nube:</p>
+    <input type="text" id="nombreReceta" placeholder="Nombre de la receta (ej. Paella de la Abuela)">
+    <input type="text" id="ingrediente" placeholder="Ingrediente principal">
+    <button onclick="guardarReceta()">Guardar en el Legado</button>
+    <div id="mensaje"></div>
+</div>
+
+<script>
+    // --- CONFIGURACIÓN (REMPLAZA ESTO) ---
+    const SUPABASE_URL = 'https://tsmbobfnvforggaajurw.supabase.co/rest/v1/'; 
+    const SUPABASE_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
+    // -------------------------------------
+
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function guardarReceta() {
+        const nombre = document.getElementById('nombreReceta').value;
+        const ingrediente = document.getElementById('ingrediente').value;
+        const mensajeDiv = document.getElementById('mensaje');
+
+        if (!nombre || !ingrediente) {
+            mensajeDiv.innerText = "⚠️ Por favor, rellena los campos.";
+            return;
+        }
+
+        mensajeDiv.innerText = "⏳ Guardando...";
+
+        const { data, error } = await supabase
+            .from('recetas')
+            .insert([{ 
+                nombre: nombre, 
+                ingredientes: { principal: ingrediente } 
+            }]);
+
+        if (error) {
+            mensajeDiv.innerText = "❌ Error: " + error.message;
+            console.error(error);
+        } else {
+            mensajeDiv.innerText = "✅ ¡Receta guardada para siempre!";
+            document.getElementById('nombreReceta').value = '';
+            document.getElementById('ingrediente').value = '';
+        }
+    }
+</script>
+
 </body>
 </html>
