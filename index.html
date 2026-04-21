@@ -40,6 +40,10 @@
     
     <button onclick="guardarReceta()">Guardar en el Legado</button>
     <div id="mensaje"></div>
+
+    <div id="lista-recetas" style="margin-top: 30px; border-top: 2px solid #fed7aa; padding-top: 20px;">
+        <h2 style="color: #f97316; text-align: center; font-size: 1.2em;">📖 El Legado Familiar</h2>
+        <div id="grid-recetas"></div> </div>
 </div>
 <script>
     const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
@@ -48,35 +52,47 @@
 
     // HU3: Función para leer y mostrar el legado
     async function cargarLegado() {
-        const grid = document.getElementById('grid-recetas');
-        grid.innerHTML = "<p style='text-align:center;'>⏳ Sincronizando con el legado...</p>";
+		const grid = document.getElementById('grid-recetas');
+		
+		// Verificación de seguridad para evitar el error 'null'
+		if (!grid) {
+			console.warn("⚠️ El contenedor 'grid-recetas' no existe todavía en el HTML.");
+			return;
+		}
 
-        const { data: recetas, error } = await supabaseClient
-            .from('recetas')
-            .select('*')
-            .order('created_at', { ascending: false });
+		grid.innerHTML = "⏳ Sincronizando...";
 
-        if (error) {
-            grid.innerHTML = "<p style='color:red;'>❌ Error al conectar con el ADN.</p>";
-            return;
-        }
+		try {
+			const { data: recetas, error } = await supabaseClient
+				.from('recetas')
+				.select('*')
+				.order('created_at', { ascending: false });
 
-        grid.innerHTML = ""; 
-        recetas.forEach(receta => {
-            const card = document.createElement('div');
-            card.style.cssText = "background: #fff; border: 1px solid #fed7aa; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);";
-            
-            // Renderizado siguiendo la HU3: Prioridad a los datos técnicos
-            card.innerHTML = `
-                <div style="font-size: 0.75em; color: #a3442d; text-transform: uppercase; font-weight: bold;">Receta Registrada</div>
-                <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 8px; color: #431407;">${receta.nombre}</div>
-                <div style="background: #fff5ed; padding: 10px; border-radius: 6px; border-left: 4px solid #f97316;">
-                    <span style="font-weight: 800;">BASE:</span> ${receta.ingredientes.principal}
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-    }
+			if (error) throw error;
+
+			grid.innerHTML = ""; 
+			recetas.forEach(receta => {
+				const card = document.createElement('div');
+				card.style.cssText = "background: #fff; border: 1px solid #fed7aa; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);";
+				
+				// Mostramos los parámetros de la HU2 si existen
+				const temp = receta.parametros?.temperatura || 'N/A';
+				const tiempo = receta.parametros?.tiempo || 'N/A';
+				const ing = receta.ingredientes?.nombre || 'Desconocido';
+				const cant = receta.ingredientes?.cantidad || '0';
+				const uni = receta.ingredientes?.unidad || '';
+
+				card.innerHTML = `
+					<strong style="color: #ea580c;">${receta.nombre}</strong><br>
+					<small>${cant}${uni} de ${ing} | 🌡️ ${temp}ºC | ⏱️ ${tiempo} min</small>
+				`;
+				grid.appendChild(card);
+			});
+		} catch (err) {
+			console.error("Error en HU3:", err);
+			grid.innerHTML = "❌ Error al cargar el legado.";
+		}
+	}
 
     // HU1: Función para guardar
     async function guardarReceta() {
