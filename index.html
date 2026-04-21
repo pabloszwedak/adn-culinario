@@ -24,32 +24,63 @@
     <input type="text" id="ingrediente" placeholder="Ingrediente principal">
     <button onclick="guardarReceta()">Guardar en el Legado</button>
     <div id="mensaje"></div>
+	<div id="lista-recetas" style="margin-top: 30px; border-top: 2px solid #fed7aa; padding-top: 20px;">
+		<h2 style="color: #f97316; text-align: center;">📖 El Legado Familiar</h2>
+		<div id="grid-recetas"></div>
+	</div>
 </div>
 <script>
-    // 1. Tus credenciales (Asegúrate de que la URL NO termine en /rest/v1/)
     const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
     const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
-
-    // 2. Inicializamos con un nombre distinto para evitar el SyntaxError
     const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-    // 3. La función de guardado
+    // HU3: Función para leer y mostrar el legado
+    async function cargarLegado() {
+        const grid = document.getElementById('grid-recetas');
+        grid.innerHTML = "<p style='text-align:center;'>⏳ Sincronizando con el legado...</p>";
+
+        const { data: recetas, error } = await supabaseClient
+            .from('recetas')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            grid.innerHTML = "<p style='color:red;'>❌ Error al conectar con el ADN.</p>";
+            return;
+        }
+
+        grid.innerHTML = ""; 
+        recetas.forEach(receta => {
+            const card = document.createElement('div');
+            card.style.cssText = "background: #fff; border: 1px solid #fed7aa; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);";
+            
+            // Renderizado siguiendo la HU3: Prioridad a los datos técnicos
+            card.innerHTML = `
+                <div style="font-size: 0.75em; color: #a3442d; text-transform: uppercase; font-weight: bold;">Receta Registrada</div>
+                <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 8px; color: #431407;">${receta.nombre}</div>
+                <div style="background: #fff5ed; padding: 10px; border-radius: 6px; border-left: 4px solid #f97316;">
+                    <span style="font-weight: 800;">BASE:</span> ${receta.ingredientes.principal}
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    // HU1: Función para guardar
     async function guardarReceta() {
         const nombre = document.getElementById('nombreReceta').value;
         const ingrediente = document.getElementById('ingrediente').value;
         const mensajeDiv = document.getElementById('mensaje');
 
         if (!nombre || !ingrediente) {
-            mensajeDiv.style.color = "red";
-            mensajeDiv.innerText = "⚠️ Por favor, rellena los campos.";
+            mensajeDiv.innerHTML = "<span style='color:red;'>⚠️ Faltan datos técnicos.</span>";
             return;
         }
 
-        mensajeDiv.style.color = "orange";
-        mensajeDiv.innerText = "⏳ Guardando en el ADN...";
+        mensajeDiv.innerHTML = "⏳ Transfiriendo al ADN...";
 
         try {
-            const { data, error } = await supabaseClient
+            const { error } = await supabaseClient
                 .from('recetas')
                 .insert([{ 
                     nombre: nombre, 
@@ -58,18 +89,19 @@
 
             if (error) throw error;
 
-            mensajeDiv.style.color = "green";
-            mensajeDiv.innerText = "✅ ¡ÉXITO! Receta guardada.";
+            mensajeDiv.innerHTML = "<span style='color:green;'>✅ Guardado en el legado.</span>";
             document.getElementById('nombreReceta').value = '';
             document.getElementById('ingrediente').value = '';
             
-            console.log("¡Dato insertado correctamente!");
+            // Actualización inmediata de la lista tras guardar
+            await cargarLegado(); 
         } catch (err) {
-            mensajeDiv.style.color = "red";
-            mensajeDiv.innerText = "❌ Error: " + err.message;
-            console.error("Detalle del error:", err);
+            mensajeDiv.innerHTML = "<span style='color:red;'>❌ Error: " + err.message + "</span>";
         }
     }
+
+    // Inicialización automática al abrir la web
+    cargarLegado();
 </script>
 </body>
 </html>
