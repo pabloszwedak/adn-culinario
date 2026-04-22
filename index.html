@@ -83,6 +83,12 @@
 		<button onclick="guardarReceta()" style="height: 50px;">💾 GUARDAR EN EL LEGADO</button>
 		<div id="mensaje" style="text-align:center; margin-top:10px;"></div>
 		<div id="grid-recetas" style="margin-top:20px;"></div>
+		
+		<div id="pantalla-completa" style="display: none; padding-top: 10px;">
+			<button onclick="ui.cerrarReceta()" style="background: #431407; margin-bottom: 20px;">⬅️ VOLVER AL LISTADO</button>
+			<div id="contenido-receta"></div>
+		</div>
+    </div>
 	</div>
 	<script>
 		const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
@@ -218,6 +224,82 @@
 			},
 			quitarIng(idx) { borradorIngredientes.splice(idx, 1); this.render(); },
 			quitarPaso(idx) { borradorPasos.splice(idx, 1); this.render(); }
+			
+			mostrarReceta(id) {
+				api.obtenerTodoElLegado().then(recetas => {
+					const r = recetas.find(rec => rec.id === id);
+					if(!r) return;
+
+					document.querySelectorAll('.container > *:not(#pantalla-completa)').forEach(el => el.style.display = 'none');
+					const pc = document.getElementById('pantalla-completa');
+					const cont = document.getElementById('contenido-receta');
+					pc.style.display = 'block';
+
+					cont.innerHTML = `
+						<h2 style="color: #f97316; font-size: 1.8em; margin-bottom:5px;">${r.nombre.toUpperCase()}</h2>
+						<div style="background: #fffaf5; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #fed7aa;">
+							<p style="font-weight: bold; margin-top:0; color: #431407;">🛒 INGREDIENTES</p>
+							<ul style="list-style: none; padding: 0; margin:0;">
+								${r.ingredientes.map(i => `<li style="margin-bottom: 5px;">⬜ ${i.cantidad}${i.unidad} ${i.nombre}</li>`).join('')}
+							</ul>
+						</div>
+						<div style="background: white;">
+							<p style="font-weight: bold; color: #ea580c; border-bottom: 2px solid #fed7aa; padding-bottom:5px;">👨‍🍳 PASO A PASO</p>
+							${r.pasos.map((p, idx) => {
+								const tieneTimer = p.tiempo && p.tiempo > 0;
+								const btnTimer = tieneTimer ? 
+									`<button id="btn-timer-${idx}" onclick="ui.iniciarTimer(${idx}, ${p.tiempo})" style="width:auto; display:inline-block; padding: 5px 10px; margin-top:5px; background:#431407; font-size:0.8em;">▶️ Iniciar ${p.tiempo} min</button>` : '';
+								
+								return `
+								<div id="paso-card-${idx}" style="margin-bottom: 20px; padding: 10px; border-left: 4px solid #f97316; background:#fffaf5; border-radius:0 8px 8px 0;">
+									<div style="font-weight: bold; font-size:0.8em; color:#f97316;">PASO ${idx + 1}</div>
+									<div style="font-size: 1.1em; color:#431407; margin: 5px 0;">${p.instruccion}</div>
+									<div style="font-size: 0.85em; font-weight: bold; color: #a3442d;">
+										${p.temperatura ? `🌡️ ${p.temperatura}°C ` : ''}
+										${p.intensidad ? `🔥 ${p.intensidad} ` : ''}
+										${p.tiempo ? `⏱️ <span id="timer-display-${idx}">${p.tiempo}:00</span>` : ''}
+									</div>
+									${btnTimer}
+								</div>`;
+							}).join('')}
+						</div>
+					`;
+				});
+			},
+
+			iniciarTimer(idx, minutos) {
+				let segundosTotales = minutos * 60;
+				const display = document.getElementById(`timer-display-${idx}`);
+				const btn = document.getElementById(`btn-timer-${idx}`);
+				const card = document.getElementById(`paso-card-${idx}`);
+				
+				btn.disabled = true;
+				btn.style.opacity = "0.5";
+				btn.innerText = "⏳ En curso...";
+
+				const intervalo = setInterval(() => {
+					segundosTotales--;
+					
+					const m = Math.floor(segundosTotales / 60);
+					const s = segundosTotales % 60;
+					display.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+
+					if (segundosTotales <= 0) {
+						clearInterval(intervalo);
+						display.innerText = "✅ ¡TIEMPO CUMPLIDO!";
+						card.style.background = "#ffedd5"; // Cambia a un naranja suave de alerta
+						card.style.borderColor = "#ea580c";
+						alert(`🔔 ¡Paso ${idx + 1} finalizado!`);
+					}
+				}, 1000);
+			},
+
+			cerrarReceta() {
+				document.getElementById('pantalla-completa').style.display = 'none';
+				document.querySelectorAll('.container > *:not(#pantalla-completa)').forEach(el => el.style.display = 'block');
+				document.getElementById('grid-recetas').style.display = 'block';
+			}
+			
 		};
 
 		async function guardarReceta() {
