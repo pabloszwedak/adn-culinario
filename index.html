@@ -145,7 +145,6 @@
 			},
 			
 			async obtenerTodoElLegado() {
-				// CARGA COMPLETA: Traemos todo para evitar el error de "0 pasos"
 				const { data, error } = await supabaseClient.from('recetas')
 					.select('*, ingredientes(*), pasos(*)')
 					.order('created_at', { ascending: false });
@@ -215,14 +214,14 @@
 
 			renderBorrador() {
 				document.getElementById('lista-ing-borrador').innerHTML = borradorIngredientes.map((i, idx) => 
-					`<div class="list-item"><span>🔹 ${i.cantidad}${i.unidad} - ${i.nombre}</span><span onclick="ui.quitarIng(${idx})">🗑️</span></div>`).join('');
+					`<div class="list-item"><span>🔹 ${i.cantidad}${i.unidad} - ${i.nombre}</span><span onclick="ui.quitarIng(${idx})" style="cursor:pointer">🗑️</span></div>`).join('');
 				
 				document.getElementById('lista-pasos-borrador').innerHTML = borradorPasos.map((p, idx) => {
 					let d = [];
 					if(p.temperatura) d.push(p.temperatura+'°C');
 					if(p.intensidad) d.push(p.intensidad);
 					if(p.tiempo) d.push(p.tiempo+' min');
-					return `<div class="list-item"><span>⏱️ ${p.instruccion} ${d.length?`[${d.join('|')}]`:''}</span><span onclick="ui.quitarPaso(${idx})">🗑️</span></div>`;
+					return `<div class="list-item"><span>⏱️ ${p.instruccion} ${d.length?`[${d.join('|')}]`:''}</span><span onclick="ui.quitarPaso(${idx})" style="cursor:pointer">🗑️</span></div>`;
 				}).join('');
 			},
 
@@ -257,9 +256,7 @@
 				const cont = document.getElementById('contenido-receta');
 				pc.style.display = 'block';
 
-				// Aseguramos que los pasos se ordenen correctamente y generamos el HTML
 				const pasosHtml = (r.pasos && r.pasos.length > 0) ? r.pasos.sort((a,b) => a.orden - b.orden).map((p, idx) => {
-					// Detectamos si el paso tiene tiempo para mostrar el botón del timer
 					const tieneTiempo = p.tiempo && p.tiempo > 0;
 					const btnTimer = tieneTiempo ? 
 						`<button onclick="ui.iniciarTimer(${idx}, ${p.tiempo})" id="btn-timer-${idx}" style="width:auto; padding:8px 12px; background:#431407; color:white; font-size:0.85em; margin-top:10px; border-radius:8px; border:none; cursor:pointer;">▶️ Iniciar ${p.tiempo} min</button>` : '';
@@ -268,37 +265,52 @@
 						<div id="paso-card-${idx}" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #f97316; background:#fffaf5; border-radius: 0 12px 12px 0; border: 1px solid #fed7aa; border-left-width: 5px;">
 							<div style="font-weight: bold; font-size:0.75em; color:#f97316; text-transform:uppercase; letter-spacing:1px;">Paso ${idx + 1}</div>
 							<div style="font-size: 1.15em; color:#431407; margin-top: 5px; font-weight: 500;">${p.instruccion}</div>
-							
 							<div style="font-size: 0.9em; font-weight: bold; color: #a3442d; margin-top:8px; display:flex; gap:10px; align-items:center;">
 								${p.temperatura ? `<span>🌡️ ${p.temperatura}°C</span>` : ''}
 								${p.intensidad ? `<span>🔥 ${p.intensidad}</span>` : ''}
 								${p.tiempo ? `<span>⏱️ <span id="timer-display-${idx}">${p.tiempo}:00</span></span>` : ''}
 							</div>
-							
 							${btnTimer}
 						</div>
 					`;
 				}).join('') : '<p style="text-align:center; padding:20px; color:#a3442d;"><i>Esta receta aún no tiene pasos definidos.</i></p>';
 
 				cont.innerHTML = `
-					<button onclick="ui.cerrarReceta()" style="background:#431407; margin-bottom:15px; width:auto; padding:8px 15px;">⬅️ VOLVER</button>
+					<button onclick="ui.cerrarReceta()" style="background:#431407; margin-bottom:15px; width:auto; padding:8px 15px; color:white; border-radius:8px;">⬅️ VOLVER</button>
 					<h2 style="color: #f97316; margin: 0 0 10px 0; font-size: 1.8em;">${r.nombre.toUpperCase()}</h2>
-					<div style="margin-bottom: 20px;">
-						<span style="font-size: 0.75em; background: #fed7aa; padding: 4px 10px; border-radius: 20px; color: #a3442d; font-weight: bold; border: 1px solid #f97316;">🏷️ ${r.categoria || 'GENERAL'}</span>
-					</div>
-					
+					<div style="margin-bottom: 20px;"><span style="font-size: 0.75em; background: #fed7aa; padding: 4px 10px; border-radius: 20px; color: #a3442d; font-weight: bold; border: 1px solid #f97316;">🏷️ ${r.categoria || 'GENERAL'}</span></div>
 					<div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 2px dashed #fed7aa;">
 						<p style="font-weight: bold; margin-top:0; color: #431407; border-bottom: 1px solid #fed7aa; padding-bottom:5px;">🛒 INGREDIENTES</p>
 						<ul style="list-style: none; padding: 0; margin:0;">
-							${r.ingredientes.map(i => `<li style="margin-bottom: 8px; font-size:0.95em;">🔸 <b>${i.cantidad}${i.unit || i.unidad}</b> ${i.nombre}</li>`).join('')}
+							${r.ingredientes.map(i => `<li style="margin-bottom: 8px; font-size:0.95em;">🔸 <b>${i.cantidad}${i.unidad}</b> ${i.nombre}</li>`).join('')}
 						</ul>
 					</div>
-
 					<div>
 						<p style="font-weight: bold; color: #ea580c; font-size: 1.1em; margin-bottom:15px;">👨‍🍳 PROCESO DE ELABORACIÓN</p>
 						${pasosHtml}
-					</div>
-				`;
+					</div>`;
+			},
+
+			// LÓGICA DEL TIMER RECUPERADA
+			iniciarTimer(idx, min) {
+				let seg = min * 60;
+				const display = document.getElementById(`timer-display-${idx}`);
+				const btn = document.getElementById(`btn-timer-${idx}`);
+				btn.disabled = true; btn.style.opacity = "0.5";
+				
+				const intervalo = setInterval(() => {
+					seg--;
+					const m = Math.floor(seg / 60);
+					const s = seg % 60;
+					display.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+					
+					if (seg <= 0) {
+						clearInterval(intervalo);
+						display.innerText = "✅ ¡LISTO!";
+						alert(`🔔 Paso ${idx + 1} completado`);
+						btn.disabled = false; btn.style.opacity = "1";
+					}
+				}, 1000);
 			},
 
 			cerrarReceta() {
@@ -311,14 +323,13 @@
 			const n = document.getElementById('nombreReceta').value;
 			const c = document.getElementById('categoriaReceta').value;
 			if(!n || !c || borradorIngredientes.length === 0) { alert("Faltan datos"); return; }
-			
 			try {
 				document.getElementById('mensaje').innerHTML = "⏳ Guardando...";
 				await api.guardarRecetaCompleta(n, c, borradorIngredientes, borradorPasos);
 				document.getElementById('mensaje').innerHTML = "✅ ¡Legado Protegido!";
 				borradorIngredientes = []; borradorPasos = []; ui.renderBorrador();
 				document.getElementById('nombreReceta').value = "";
-				setTimeout(() => ui.cargarLegado(), 500); // Pequeño margen para Supabase
+				setTimeout(() => ui.cargarLegado(), 500);
 			} catch(e) { document.getElementById('mensaje').innerHTML = "❌ Error: " + e.message; }
 		}
 
