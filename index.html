@@ -3,143 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADN Culinario | Sistema de Precisión</title>
+    <title>ADN Culinario | Sistema de Élite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fafaf9; }
-        .recipe-card:hover { transform: translateY(-2px); transition: all 0.2s; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfaf8; }
+        .recipe-card:hover { transform: translateY(-3px); }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-10">
 
-<div class="max-w-2xl mx-auto" id="main-view">
-    <header class="text-center mb-10">
-        <h1 class="text-4xl font-bold text-stone-900 tracking-tight">ADN Culinario</h1>
-        <p class="text-stone-500 mt-2 italic">Ingeniería gastronómica familiar</p>
+<div class="max-w-3xl mx-auto" id="main-view">
+    <header class="text-center mb-12">
+        <h1 class="text-5xl font-extrabold text-stone-900 tracking-tighter">ADN Culinario</h1>
+        <p class="text-amber-700 font-medium mt-2">Protegiendo el Legado con Precisión Técnica</p>
     </header>
 
-    <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-200 mb-6">
-        <input type="text" id="bus-nombre" placeholder="🔍 Buscar en el archivo del legado..." 
-               class="w-full bg-stone-50 border-none rounded-xl p-3 focus:ring-2 focus:ring-amber-500 outline-none"
-               oninput="App.filtrar()">
+    <div class="bg-white p-2 rounded-2xl shadow-sm border border-stone-200 mb-8 flex items-center px-4">
+        <span class="text-stone-400">🔍</span>
+        <input type="text" id="bus-nombre" placeholder="Buscar en el archivo..." 
+               class="w-full p-3 outline-none bg-transparent" oninput="App.filtrar()">
     </div>
 
-    <div class="bg-white p-6 rounded-3xl shadow-md border border-stone-100 mb-8">
-        <h2 class="text-lg font-bold text-stone-800 mb-4 flex items-center gap-2">
-            <span class="w-2 h-6 bg-amber-600 rounded-full"></span> Nueva Receta
-        </h2>
+    <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-stone-100 mb-10">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="h-8 w-1.5 bg-amber-600 rounded-full"></div>
+            <h2 class="text-xl font-bold text-stone-800">Nueva Entrada de ADN</h2>
+        </div>
         
-        <div class="grid grid-cols-3 gap-3 mb-4">
-            <div class="col-span-2">
-                <label class="text-xs font-bold text-stone-400 uppercase">Nombre</label>
-                <input type="text" id="rec-nom" class="w-full border-b-2 border-stone-100 p-2 outline-none focus:border-amber-500" placeholder="Ej: Masa Madre 1940">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+                <label class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Nombre del Legado</label>
+                <input type="text" id="rec-nom" class="w-full border-b-2 border-stone-100 py-2 outline-none focus:border-amber-500 transition-colors" placeholder="Ej: Arroz de la Abuela">
             </div>
             <div>
-                <label class="text-xs font-bold text-stone-400 uppercase">Categoría</label>
-                <select id="rec-cat" class="w-full border-b-2 border-stone-100 p-2 outline-none">
-                    <option value="Panadería">🥖 Pan</option>
+                <label class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Categoría (HU2)</label>
+                <select id="rec-cat" class="w-full border-b-2 border-stone-100 py-2 outline-none focus:border-amber-500 bg-transparent">
+                    <option value="Panadería">🥖 Panadería</option>
                     <option value="Salsas">🍯 Salsas</option>
-                    <option value="Principal">🥘 Plato</option>
+                    <option value="Principal">🥘 Plato Principal</option>
+                    <option value="Repostería">🍰 Repostería</option>
                 </select>
             </div>
         </div>
 
-        <label class="text-xs font-bold text-stone-400 uppercase">Ingredientes (ADN Preciso)</label>
-        <div class="flex gap-2 mb-4">
-            <input type="text" id="ing-nom" placeholder="Ingrediente" class="flex-grow bg-stone-50 p-3 rounded-xl outline-none">
-            <input type="number" id="ing-cant" placeholder="Cant." class="w-20 bg-stone-50 p-3 rounded-xl outline-none">
-            <select id="ing-uni" class="w-24 bg-stone-50 p-3 rounded-xl outline-none">
-                <option value="gr">gr</option>
-                <option value="ml">ml</option>
-                <option value="pizca">pizca</option>
-            </select>
-            <button onclick="App.addIng()" class="bg-stone-900 text-white w-12 h-12 rounded-xl hover:bg-stone-700">+</button>
+        <div class="mb-8">
+            <label class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Ingredientes</label>
+            <div class="flex gap-2 mt-2">
+                <input type="text" id="ing-nom" placeholder="Ingrediente" class="flex-grow bg-stone-50 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-200">
+                <input type="number" id="ing-cant" placeholder="Cant." class="w-20 bg-stone-50 p-3 rounded-xl outline-none">
+                <select id="ing-uni" class="w-24 bg-stone-100 p-3 rounded-xl outline-none font-bold text-stone-600">
+                    <option value="gr">gr</option>
+                    <option value="ml">ml</option>
+                    <option value="kg">kg</option>
+                    <option value="l">l</option>
+                    <option value="pizca">pizca</option>
+                </select>
+                <button onclick="App.addIng()" class="bg-stone-900 text-white px-5 rounded-xl hover:bg-amber-600 transition-colors font-bold text-xl">+</button>
+            </div>
+            <div id="lista-ing" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2"></div>
         </div>
-        <div id="lista-ing" class="mb-6 space-y-2"></div>
 
-        <button onclick="App.guardar()" class="w-full bg-amber-600 text-white font-bold p-4 rounded-2xl hover:bg-amber-700 shadow-lg shadow-amber-200 transition-all">
-            PROTEGER LEGADO
+        <button onclick="App.guardar()" class="w-full bg-amber-600 text-white font-bold py-5 rounded-2xl hover:bg-amber-700 shadow-lg shadow-amber-200 transition-all active:scale-[0.98]">
+            SINCRONIZAR CON EL LEGADO
         </button>
-        <p id="msg" class="text-center text-sm mt-4 text-stone-500"></p>
+        <p id="msg" class="text-center text-xs mt-4 text-stone-400 font-medium"></p>
     </div>
 
-    <h2 class="text-xl font-bold text-stone-800 mb-6">El Archivo</h2>
-    <div id="grid-recetas" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    <h2 class="text-2xl font-bold text-stone-800 mb-6 px-2">Archivo Guardado</h2>
+    <div id="grid-recetas" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
 </div>
 
 <script>
-    // --- ÚNICA INSTANCIA DE SUPABASE ---
-    const _URL = "TU_URL";
-    const _KEY = "TU_KEY";
-    const client = supabase.createClient(_URL, _KEY);
-
-    const App = {
-        recetas: [],
-        bIng: [],
-
-        async init() {
-            const { data } = await client.from('recetas').select('*').order('created_at', { ascending: false });
-            this.recetas = data || [];
-            this.renderGrid(this.recetas);
-        },
-
-        addIng() {
-            const n = document.getElementById('ing-nom').value;
-            const c = document.getElementById('ing-cant').value;
-            const u = document.getElementById('ing-uni').value;
-            if(!n || !c) return alert("⚠️ Completa el ingrediente.");
-            
-            this.bIng.push({ nombre: n, cantidad: c, unidad: u });
-            this.renderListIng();
-            document.getElementById('ing-nom').value = "";
-            document.getElementById('ing-cant').value = "";
-        },
-
-        renderListIng() {
-            const cont = document.getElementById('lista-ing');
-            cont.innerHTML = this.bIng.map(i => `
-                <div class="flex justify-between bg-amber-50 p-3 rounded-lg border border-amber-100">
-                    <span class="font-semibold">${i.nombre}</span>
-                    <span class="text-amber-700">${i.cantidad} ${i.unidad}</span>
-                </div>
-            `).join('');
-        },
-
-        renderGrid(lista) {
-            const g = document.getElementById('grid-recetas');
-            g.innerHTML = lista.map(r => `
-                <div class="recipe-card bg-white p-5 rounded-2xl border border-stone-200 shadow-sm cursor-pointer">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-amber-600">${r.categoria}</span>
-                    <h3 class="text-lg font-bold text-stone-800 mt-1">${r.nombre}</h3>
-                </div>
-            `).join('');
-        },
-
-        async guardar() {
-            const n = document.getElementById('rec-nom').value;
-            const c = document.getElementById('rec-cat').value;
-            if(!n || this.bIng.length === 0) return alert("⚠️ Datos insuficientes.");
-
-            document.getElementById('msg').innerText = "Sincronizando...";
-            const { error } = await client.from('recetas').insert([{ nombre: n, categoria: c }]);
-            
-            if(!error) {
-                document.getElementById('msg').innerText = "✅ ADN Guardado";
-                this.bIng = [];
-                this.renderListIng();
-                this.init();
-            }
-        },
-
-        filtrar() {
-            const t = document.getElementById('bus-nombre').value.toLowerCase();
-            this.renderGrid(this.recetas.filter(r => r.nombre.toLowerCase().includes(t)));
-        }
-    };
-
-    App.init();
-</script>
-</body>
-</html>
+    // --- ÚNICA INSTANCIA PARA EVITAR SyntaxError ---
+    const _URL = "TU_URL
