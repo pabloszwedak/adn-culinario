@@ -77,4 +77,78 @@
 
 <script>
     // --- ÚNICA INSTANCIA PARA EVITAR SyntaxError ---
-    const _URL = "TU_URL
+    const _URL = "TU_URL";
+    const _KEY = "TU_KEY";
+    const client = supabase.createClient(_URL, _KEY);
+
+    const App = {
+        recetas: [],
+        bIng: [],
+
+        async init() {
+            const { data } = await client.from('recetas').select('*').order('created_at', { ascending: false });
+            this.recetas = data || [];
+            this.renderGrid(this.recetas);
+        },
+
+        addIng() {
+            const n = document.getElementById('ing-nom').value;
+            const c = document.getElementById('ing-cant').value;
+            const u = document.getElementById('ing-uni').value;
+            if(!n || !c) return alert("⚠️ Ingrese nombre y cantidad.");
+            
+            this.bIng.push({ nombre: n, cantidad: c, unidad: u });
+            this.renderListIng();
+            document.getElementById('ing-nom').value = "";
+            document.getElementById('ing-cant').value = "";
+        },
+
+        renderListIng() {
+            const cont = document.getElementById('lista-ing');
+            cont.innerHTML = this.bIng.map(i => `
+                <div class="flex justify-between items-center bg-white border border-stone-200 p-3 rounded-xl shadow-sm">
+                    <span class="font-semibold text-stone-700">${i.nombre}</span>
+                    <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-lg">${i.cantidad} ${i.unidad}</span>
+                </div>
+            `).join('');
+        },
+
+        renderGrid(lista) {
+            const g = document.getElementById('grid-recetas');
+            g.innerHTML = lista.map(r => `
+                <div class="recipe-card bg-white p-6 rounded-[1.5rem] border border-stone-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-[10px] font-black uppercase tracking-tighter text-amber-600 bg-amber-50 px-2 py-1 rounded-md">${r.categoria}</span>
+                        <span class="text-stone-300 group-hover:text-amber-500">📖</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-stone-800">${r.nombre}</h3>
+                </div>
+            `).join('');
+        },
+
+        async guardar() {
+            const n = document.getElementById('rec-nom').value;
+            const c = document.getElementById('rec-cat').value;
+            if(!n || this.bIng.length === 0) return alert("⚠️ Se requiere nombre e ingredientes.");
+
+            document.getElementById('msg').innerText = "⏳ Sincronizando con Supabase...";
+            const { error } = await client.from('recetas').insert([{ nombre: n, categoria: c }]);
+            
+            if(!error) {
+                document.getElementById('msg').innerText = "✅ ADN PROTEGIDO EN LA NUBE";
+                this.bIng = [];
+                this.renderListIng();
+                this.init();
+            }
+        },
+
+        filtrar() {
+            const t = document.getElementById('bus-nombre').value.toLowerCase();
+            this.renderGrid(this.recetas.filter(r => r.nombre.toLowerCase().includes(t)));
+        }
+    };
+
+    App.init();
+</script>
+</body>
+</html>
