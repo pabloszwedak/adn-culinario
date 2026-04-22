@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADN Culinario | Ingeniería de Legado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfaf8; }
+        .nt-warning { display: none !important; } /* Silenciar aviso Tailwind */
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+<div class="max-w-3xl mx-auto">
+    <header class="text-center mb-10">
+        <h1 class="text-5xl font-extrabold text-stone-900 tracking-tighter italic">ADN Culinario</h1>
+        <p class="text-amber-600 font-medium mt-2">v2.8: Restauración de Ingeniería HU5</p>
+    </header>
+
+    <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-stone-100 mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+                <label class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Nombre del Legado</label>
+                <input type="text" id="rec-nom" class="w-full border-b-2 border-stone-100 py-2 outline-none focus:border-amber-600" placeholder="Ej: Pan de la Abuela">
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Categoría (HU2)</label>
+                <select id="rec-cat" class="w-full border-b-2 border-stone-100 py-2 outline-none bg-transparent font-bold">
+                    <option value="">Seleccionar Categoría</option>
+                    <option value="Panadería">🥖 Panadería</option>
+                    <option value="Repostería">🍰 Repostería</option>
+                    <option value="Salsas">🍯 Salsas</option>
+                    <option value="Plato Principal">🥘 Plato Principal</option>
+                    <option value="Entrantes">🥗 Entrantes</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h3 class="text-sm font-bold text-stone-800 mb-3 uppercase tracking-widest">📝 Ingredientes</h3>
+            <div class="flex gap-2">
+                <input type="text" id="ing-nom" placeholder="Ingrediente" class="flex-grow bg-stone-50 p-3 rounded-xl outline-none">
+                <input type="number" id="ing-cant" placeholder="Cant" class="w-20 bg-stone-50 p-3 rounded-xl outline-none">
+                <select id="ing-uni" class="w-24 bg-stone-100 p-3 rounded-xl outline-none font-bold">
+                    <option value="gr">gr</option>
+                    <option value="ml">ml</option>
+                    <option value="pizca">pizca</option>
+                </select>
+                <button onclick="App.addIng()" class="bg-stone-900 text-white px-5 rounded-xl hover:bg-amber-600 font-bold">+</button>
+            </div>
+            <div id="lista-ing" class="mt-4 flex flex-wrap gap-2"></div>
+        </div>
+
+        <div class="mb-10 bg-stone-50 p-6 rounded-2xl border border-stone-100">
+            <h3 class="text-sm font-bold text-stone-800 mb-3 uppercase tracking-widest">⚙️ Ingeniería de Pasos</h3>
+            
+            <input type="text" id="pas-desc" placeholder="¿Qué hay que hacer? (Detalle técnico del paso)" 
+                   class="w-full p-3 mb-3 rounded-xl border border-stone-200 outline-none focus:border-amber-600">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <select id="pas-tipo" class="p-3 rounded-xl border border-stone-200 bg-white" onchange="App.uiAjustar()">
+                    <option value="Amasar">🥣 Amasar / Mezclar</option>
+                    <option value="Hornear">🔥 Hornear</option>
+                    <option value="Congelar">❄️ Congelar / Refrigerar</option>
+                    <option value="Fuego">🥘 Fuego (Hervir/Sofreír)</option>
+                    <option value="Reposar">⏳ Reposar</option>
+                </select>
+                <div class="flex gap-2">
+                    <input type="number" id="pas-temp" placeholder="Temp °C" class="w-1/2 p-3 rounded-xl border border-stone-200">
+                    <select id="pas-int" class="w-1/2 p-3 rounded-xl border border-stone-200 bg-white" style="display:none;">
+                        <option value="">Intensidad</option>
+                        <option value="Mínimo">Mínimo</option>
+                        <option value="Medio">Medio</option>
+                        <option value="Máximo">Máximo</option>
+                    </select>
+                    <input type="number" id="pas-time" placeholder="Min" class="w-1/2 p-3 rounded-xl border border-stone-200">
+                </div>
+            </div>
+            <button onclick="App.addPaso()" class="w-full bg-stone-200 text-stone-700 font-bold p-3 rounded-xl hover:bg-amber-100 hover:text-amber-700 transition-all">Añadir Paso al Proceso</button>
+            <div id="lista-pas" class="mt-4 space-y-2"></div>
+        </div>
+
+        <button onclick="App.guardar()" class="w-full bg-amber-600 text-white font-bold py-5 rounded-2xl hover:bg-amber-700 shadow-lg">
+            SINCRO CON SUPABASE (HU1)
+        </button>
+        <p id="msg" class="text-center text-xs mt-4 text-stone-400 font-bold uppercase"></p>
+    </div>
+
+    <div id="grid-recetas" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+</div>
+
+<script>
+    const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co';
+    const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
+    const client = supabase.createClient(SB_URL, SB_KEY);
+
+    const App = {
+        recetas: [],
+        bIng: [],
+        bPas: [],
+
+        async init() {
+            const { data } = await client.from('recetas').select('*').order('created_at', { ascending: false });
+            this.recetas = data || [];
+            this.renderGrid();
+        },
+
+        addIng() {
+            const n = document.getElementById('ing-nom').value;
+            const c = parseFloat(document.getElementById('ing-cant').value);
+            if(!n || isNaN(c) || c <= 0) return alert("⚠️ Cantidad > 0 obligatoria.");
+            this.bIng.push({ nombre: n, cantidad: c, unidad: document.getElementById('ing-uni').value });
+            this.renderListas();
+            document.getElementById('ing-nom').value = ""; document.getElementById('ing-cant').value = "";
+        },
+
+        addPaso() {
+            const d = document.getElementById('pas-desc').value;
+            const t = document.getElementById('pas-tipo').value;
+            const temp = parseFloat(document.getElementById('pas-temp').value) || 0;
+            const time = parseInt(document.getElementById('pas-time').value) || 0;
+            const int = document.getElementById('pas-int').value;
+
+            if(!d) return alert("⚠️ Debes describir la acción técnica.");
+            if(t === "Hornear" && (temp < 1 || temp > 500 || time <= 0)) return alert("⚠️ Hornear: Rango 1-500°C y tiempo obligatorio.");
+            if(t === "Congelar" && (temp < -50 || temp > 15 || time <= 0)) return alert("⚠️ Frío: Rango -50 a 15°C y tiempo obligatorio.");
+            if(t === "Fuego" && (temp <= 0 && int === "") || (time <= 0)) return alert("⚠️ Parámetros de fuego incompletos.");
+            if(time <= 0) return alert("⚠️ Tiempo obligatorio para Timers.");
+
+            this.bPas.push({ descripcion: d, tipo: t, temperatura: temp, tiempo: time, intensidad: int });
+            this.renderListas();
+            document.getElementById('pas-desc').value = "";
+        },
+
+        renderListas() {
+            document.getElementById('lista-ing').innerHTML = this.bIng.map(i => `<span class="bg-amber-100 px-3 py-1.5 rounded-full text-[10px] font-black">${i.nombre} (${i.cantidad}${i.unidad})</span>`).join('');
+            document.getElementById('lista-pas').innerHTML = this.bPas.map(p => `
+                <div class="bg-white p-3 rounded-xl border border-stone-200 text-[11px] shadow-sm font-bold">
+                    <div class="text-amber-700 uppercase">${p.tipo} | ${p.temperatura}°C | ${p.tiempo} min</div>
+                    <div class="text-stone-400 italic">${p.descripcion} ${p.intensidad ? '- Int: '+p.intensidad : ''}</div>
+                </div>`).join('');
+        },
+
+        uiAjustar() {
+            const t = document.getElementById('pas-tipo').value;
+            document.getElementById('pas-int').style.display = (t === "Fuego" || t === "Amasar") ? "block" : "none";
+            document.getElementById('pas-temp').style.display = (t === "Reposar") ? "none" : "block";
+        },
+
+        renderGrid() {
+            document.getElementById('grid-recetas').innerHTML = this.recetas.map(r => `
+                <div class="bg-white p-6 rounded-[2rem] border border-stone-100 shadow-sm">
+                    <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">${r.categoria}</span>
+                    <h3 class="text-xl font-bold text-stone-800 mt-2">${r.nombre}</h3>
+                </div>`).join('');
+        },
+
+        async guardar() {
+            const n = document.getElementById('rec-nom').value;
+            const c = document.getElementById('rec-cat').value;
+            if(!n || !c || this.bIng.length === 0) return alert("⚠️ Datos incompletos.");
+            document.getElementById('msg').innerText = "⏳ PROTEGIENDO LEGADO...";
+            const { error } = await client.from('recetas').insert([{ nombre: n, categoria: c }]);
+            if(!error) {
+                document.getElementById('msg').innerText = "✅ SINCRO EXITOSA";
+                this.bIng = []; this.bPas = []; this.renderListas(); this.init();
+            }
+        }
+    };
+    App.init();
+</script>
+</body>
+</html>
