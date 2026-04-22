@@ -175,13 +175,11 @@
 				const esVitro = ['sofreir', 'plancha', 'hervir', 'freir', 'guisar'].includes(tipo);
 				const tieneTiempo = (tiempo && tiempo > 0);
 
-				// VALIDACIONES HU5
 				if ((esVitro || tipo === 'amasar') && !intensidad) {
 					alert("⚠️ Selecciona la intensidad o tipo de amasado");
 					return;
 				}
 
-				// Lógica de tiempo obligatorio
 				const necesitaTiempoSiempre = (tipo === 'hornear' || tipo === 'congelar' || tipo === 'reposar' || intensidad === 'Intenso');
 				if (necesitaTiempoSiempre && !tieneTiempo) {
 					alert(`⚠️ El tiempo es obligatorio para: ${tipo.toUpperCase()} (${intensidad || ''})`);
@@ -222,8 +220,10 @@
 					return `<div class="list-item"><span>⏱️ ${p.instruccion} ${stringDetalles}</span><span onclick="ui.quitarPaso(${idx})" style="cursor:pointer">🗑️</span></div>`;
 				}).join('');
 			},
+
 			quitarIng(idx) { borradorIngredientes.splice(idx, 1); this.render(); },
-			quitarPaso(idx) { borradorPasos.splice(idx, 1); this.render(); }
+			
+			quitarPaso(idx) { borradorPasos.splice(idx, 1); this.render(); }, // <-- Coma añadida aquí
 			
 			mostrarReceta(id) {
 				api.obtenerTodoElLegado().then(recetas => {
@@ -279,7 +279,6 @@
 
 				const intervalo = setInterval(() => {
 					segundosTotales--;
-					
 					const m = Math.floor(segundosTotales / 60);
 					const s = segundosTotales % 60;
 					display.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
@@ -287,7 +286,7 @@
 					if (segundosTotales <= 0) {
 						clearInterval(intervalo);
 						display.innerText = "✅ ¡TIEMPO CUMPLIDO!";
-						card.style.background = "#ffedd5"; // Cambia a un naranja suave de alerta
+						card.style.background = "#ffedd5"; 
 						card.style.borderColor = "#ea580c";
 						alert(`🔔 ¡Paso ${idx + 1} finalizado!`);
 					}
@@ -299,8 +298,7 @@
 				document.querySelectorAll('.container > *:not(#pantalla-completa)').forEach(el => el.style.display = 'block');
 				document.getElementById('grid-recetas').style.display = 'block';
 			}
-			
-		};
+		}; // <-- El objeto ui se cierra correctamente aquí
 
 		async function guardarReceta() {
 			const msg = document.getElementById('mensaje');
@@ -320,8 +318,12 @@
 			try {
 				const recetas = await api.obtenerTodoElLegado();
 				document.getElementById('grid-recetas').innerHTML = recetas.map(r => `
-					<div style="background:white; border:1px solid #fed7aa; padding:10px; border-radius:8px; margin-bottom:5px; font-size:0.85em;">
-						<b>${r.nombre.toUpperCase()}</b> (${r.ingredientes.length} ing. | ${r.pasos.length} pasos)
+					<div onclick="ui.mostrarReceta('${r.id}')" style="background:white; border:1px solid #fed7aa; padding:15px; border-radius:12px; margin-bottom:10px; cursor:pointer; display: flex; justify-content: space-between; align-items: center;">
+						<div>
+							<b style="color: #431407;">${r.nombre.toUpperCase()}</b><br>
+							<span style="font-size: 0.75em; color: #a3442d;">${r.ingredientes.length} ing. | ${r.pasos.length} pasos</span>
+						</div>
+						<span style="color: #f97316;">➔</span>
 					</div>
 				`).join('');
 			} catch(e) { console.error(e); }
@@ -330,6 +332,5 @@
 		ui.ajustarInterfazPaso();
 		cargarLegado();
 	</script>
-
 </body>
 </html>
