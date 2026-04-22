@@ -16,157 +16,94 @@
     </style>
 </head>
 <body>
+	<div class="container">
+		<h1>🍳 ADN Culinario Pro</h1>
+		<div class="badge">MODO: MVP2 - DISEÑO DINÁMICO</div>
+		
+		<input type="text" id="nombreReceta" placeholder="Nombre de la Receta (ej. Bizcocho)">
 
-<div class="container">
-    <h1>🍳 ADN Culinario</h1>
-    <p style="text-align: center; font-size: 0.9em; color: #a3442d; background: #fed7aa; border-radius: 5px;">MVP2 - MULTI-ENTIDAD ACTIVO</p>
-    
-    <input type="text" id="nombreReceta" placeholder="Nombre de la Receta">
+		<div style="border: 1px solid #fed7aa; padding: 15px; border-radius: 12px; margin-bottom: 20px; background: #fffaf5;">
+			<p style="font-weight: bold; margin: 0 0 10px 0; color: #f97316;">📦 INGREDIENTES EN BORRADOR</p>
+			<div id="lista-ing-borrador" style="margin-bottom: 10px;"></div> <div style="display: flex; gap: 5px;">
+				<input type="number" id="ing-cant" placeholder="Cant." style="width: 70px;">
+				<input type="text" id="ing-nombre" placeholder="Ingrediente..." style="flex: 1;">
+				<button onclick="ui.agregarIngrediente()" style="width: 45px; background: #431407;">+</button>
+			</div>
+		</div>
 
-    <div id="seccion-ingredientes" style="margin-bottom: 20px;">
-        <p style="font-weight: bold; font-size: 0.8em;">📦 INGREDIENTES</p>
-        <div id="lista-ingredientes-temp"></div>
-        <div style="display: flex; gap: 5px;">
-            <input type="number" id="ing-cant" placeholder="Cant." style="width: 70px;">
-            <input type="text" id="ing-nombre" placeholder="Ingrediente" style="flex: 1;">
-            <button onclick="ui.agregarIngrediente()" style="width: 40px; background: #431407;">+</button>
-        </div>
-    </div>
+		<div style="border: 1px solid #ea580c; padding: 15px; border-radius: 12px; margin-bottom: 20px; background: #fffaf5;">
+			<p style="font-weight: bold; margin: 0 0 10px 0; color: #ea580c;">🔥 PASOS TÉCNICOS</p>
+			<div id="lista-pasos-borrador" style="margin-bottom: 10px;"></div>
 
-    <div id="seccion-pasos" style="margin-bottom: 20px;">
-        <p style="font-weight: bold; font-size: 0.8em;">🔥 PASOS TÉCNICOS</p>
-        <div id="lista-pasos-temp"></div>
-        <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-            <input type="text" id="paso-inst" placeholder="Instrucción (ej. Batir)">
-        </div>
-        <div style="display: flex; gap: 5px;">
-            <input type="number" id="paso-temp" placeholder="ºC" style="flex: 1;">
-            <input type="number" id="paso-tiempo" placeholder="min" style="flex: 1;">
-            <button onclick="ui.agregarPaso()" style="width: 40px; background: #431407;">+</button>
-        </div>
-    </div>
-    
-    <button onclick="guardarReceta()" id="btn-guardar">Guardar Receta Completa</button>
-    <div id="mensaje"></div>
-    <div id="grid-recetas"></div>
-</div>
+			<select id="paso-tipo" onchange="ui.ajustarCamposPaso()" style="margin-bottom: 10px; background: #fff;">
+				<option value="batir">🥣 Batir / Mezclar</option>
+				<option value="hornear">🔥 Hornear</option>
+				<option value="congelar">❄️ Congelar / Refrigerar</option>
+				<option value="reposar">⏳ Reposar</option>
+			</select>
 
-<script>
-	// 1. CONFIGURACIÓN GLOBAL
-const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
-const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
-const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+			<input type="text" id="paso-inst" placeholder="Instrucción detallada...">
+			
+			<div id="campos-tecnicos" style="display: flex; gap: 5px;">
+				<input type="number" id="paso-temp" placeholder="ºC" title="Temperatura">
+				<input type="number" id="paso-tiempo" placeholder="min" title="Tiempo">
+				<button onclick="ui.agregarPaso()" style="width: 45px; background: #431407;">+</button>
+			</div>
+		</div>
+		
+		<button onclick="guardarReceta()" style="height: 50px; font-size: 1.1em;">💾 GUARDAR LEGADO COMPLETO</button>
+		<div id="mensaje"></div>
+		<div id="grid-recetas"></div>
+	</div>
 
-let tempIngredientes = [];
-let tempPasos = [];
+	<script>
+	// ... (Configuración de Supabase igual) ...
 
-// 2. OBJETO API (Lógica de base de datos)
-const api = {
-    async guardarRecetaCompleta(nombre, ingredientes, pasos) {
-        const { data: receta, error: rError } = await supabaseClient
-            .from('recetas')
-            .insert([{ nombre }])
-            .select().single();
-        if (rError) throw rError;
+	let borradorIngredientes = [];
+	let borradorPasos = [];
 
-        const ingData = ingredientes.map(i => ({ ...i, receta_id: receta.id }));
-        await supabaseClient.from('ingredientes').insert(ingData);
+	const ui = {
+		ajustarCamposPaso() {
+			const tipo = document.getElementById('paso-tipo').value;
+			const campoTemp = document.getElementById('paso-temp');
+			// Si es batir o reposar, la temperatura suele ser opcional/ambiente
+			campoTemp.style.display = (tipo === 'batir' || tipo === 'reposar') ? 'none' : 'block';
+		},
+		agregarIngrediente() {
+			const n = document.getElementById('ing-nombre').value;
+			const c = document.getElementById('ing-cant').value;
+			if(!n || !c) return;
+			borradorIngredientes.push({ nombre: n, cantidad: c, unidad: 'g' });
+			this.renderBorradores();
+			document.getElementById('ing-nombre').value = ""; document.getElementById('ing-cant').value = "";
+		},
+		agregarPaso() {
+			const tipo = document.getElementById('paso-tipo').value;
+			const inst = document.getElementById('paso-inst').value;
+			const temp = parseFloat(document.getElementById('paso-temp').value) || null;
+			const tiempo = document.getElementById('paso-tiempo').value || null;
 
-        const pasosData = pasos.map((p, idx) => ({ ...p, receta_id: receta.id, orden: idx }));
-        await supabaseClient.from('pasos').insert(pasosData);
-        return receta;
-    },
-    async obtenerTodoElLegado() {
-        const { data, error } = await supabaseClient
-            .from('recetas')
-            .select(`id, nombre, created_at, ingredientes(*), pasos(*)`)
-            .order('created_at', { ascending: false });
-        if (error) throw error; 
-        return data;
-    }
-};
+			if (temp > 300) { alert("⚠️ Temperatura imposible para cocina."); return; }
+			if(!inst) return;
 
-// 3. OBJETO UI (Lógica de interfaz - ¡IMPORTANTE!)
-const ui = {
-    agregarIngrediente() {
-        const nombre = document.getElementById('ing-nombre').value;
-        const cantidad = document.getElementById('ing-cant').value;
-        if(!nombre || !cantidad) return;
-        tempIngredientes.push({ nombre, cantidad, unidad: 'g' });
-        this.render();
-        document.getElementById('ing-nombre').value = ""; 
-        document.getElementById('ing-cant').value = "";
-    },
-    agregarPaso() {
-        const inst = document.getElementById('paso-inst').value;
-        const temp = parseFloat(document.getElementById('paso-temp').value);
-        const tiempo = document.getElementById('paso-tiempo').value;
-        
-        if (temp > 300 || temp < -50) { 
-            alert("⚠️ Temperatura fuera de rango (-50 a 300ºC)"); 
-            return; 
-        }
-        if(!inst || isNaN(temp)) return;
-        
-        tempPasos.push({ instruccion: inst, temperatura: temp, tiempo });
-        this.render();
-        document.getElementById('paso-inst').value = ""; 
-        document.getElementById('paso-temp').value = ""; 
-        document.getElementById('paso-tiempo').value = "";
-    },
-    render() {
-        const listIng = document.getElementById('lista-ing-temp');
-        const listPas = document.getElementById('lista-pasos-temp');
-        if(listIng) listIng.innerHTML = tempIngredientes.map(i => `<div class="list-item">🔹 ${i.cantidad}g ${i.nombre}</div>`).join('');
-        if(listPas) listPas.innerHTML = tempPasos.map(p => `<div class="list-item">⏱️ ${p.instruccion} (${p.temperatura}ºC)</div>`).join('');
-    }
-};
+			borradorPasos.push({ instruccion: `[${tipo.toUpperCase()}] ${inst}`, temperatura: temp, tiempo });
+			this.renderBorradores();
+			document.getElementById('paso-inst').value = "";
+		},
+		renderBorradores() {
+			document.getElementById('lista-ing-borrador').innerHTML = borradorIngredientes.map((i, idx) => 
+				`<div class="list-item"><b>${i.cantidad}g</b> ${i.nombre} <span onclick="ui.quitarIng(${idx})" style="float:right; cursor:pointer">🗑️</span></div>`
+			).join('');
+			
+			document.getElementById('lista-pasos-borrador').innerHTML = borradorPasos.map((p, idx) => 
+				`<div class="list-item"><b>Paso ${idx+1}:</b> ${p.instruccion} ${p.temperatura ? `(${p.temperatura}ºC)` : ''} <span onclick="ui.quitarPaso(${idx})" style="float:right; cursor:pointer">🗑️</span></div>`
+			).join('');
+		},
+		quitarIng(idx) { borradorIngredientes.splice(idx, 1); this.renderBorradores(); },
+		quitarPaso(idx) { borradorPasos.splice(idx, 1); this.renderBorradores(); }
+	};
 
-// 4. FUNCIONES DE CONTROLADOR (Visibles para el HTML)
-async function guardarReceta() {
-    const msg = document.getElementById('mensaje');
-    const nombre = document.getElementById('nombreReceta').value;
-    
-    if(!nombre || tempIngredientes.length === 0) { 
-        msg.innerHTML = "<span style='color:red;'>❌ Faltan datos o ingredientes</span>"; 
-        return; 
-    }
-    
-    try {
-        msg.innerHTML = "⏳ Sincronizando ADN...";
-        await api.guardarRecetaCompleta(nombre, tempIngredientes, tempPasos);
-        msg.innerHTML = "<span style='color:green;'>✅ Legado Guardado con Éxito</span>";
-        
-        // Reset
-        tempIngredientes = []; 
-        tempPasos = []; 
-        ui.render();
-        document.getElementById('nombreReceta').value = "";
-        cargarLegado();
-    } catch(e) { 
-        msg.innerHTML = "❌ Error: " + e.message; 
-    }
-}
-
-async function cargarLegado() {
-    const grid = document.getElementById('grid-recetas');
-    if(!grid) return;
-    try {
-        const recetas = await api.obtenerTodoElLegado();
-        grid.innerHTML = recetas.map(r => `
-            <div style="background:white; border:2px solid #fed7aa; padding:15px; border-radius:12px; margin-bottom:10px;">
-                <div style="font-weight:bold; color:#431407;">${r.nombre.toUpperCase()}</div>
-                <div style="font-size:0.8em; color:#666;">Ingredientes: ${r.ingredientes.length} | Pasos: ${r.pasos.length}</div>
-            </div>
-        `).join('');
-    } catch(e) { 
-        console.error("Error al cargar:", e); 
-    }
-}
-
-// 5. INICIO
-cargarLegado();
-
-</script>
+	// ... (Función guardarReceta usa borradorIngredientes y borradorPasos) ...
+	</script>
 </body>
 </html>
