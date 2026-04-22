@@ -22,6 +22,15 @@
 		<div class="badge">HU5: ESTANDARIZACIÓN UNIVERSAL</div>
 		
 		<input type="text" id="nombreReceta" placeholder="Nombre de la Receta">
+		
+		<select id="categoriaReceta">
+			<option value="">-- Selecciona Categoría --</option>
+			<option value="Panadería">🥖 Panadería / Masas</option>
+			<option value="Repostería">🍰 Repostería</option>
+			<option value="Principal">🥘 Plato Principal</option>
+			<option value="Entrantes">🥗 Entrantes / Picoteo</option>
+			<option value="Salsas">🍯 Salsas / ADN Base</option>
+		</select>
 
 		<div style="border: 1px solid #fed7aa; padding: 15px; border-radius: 12px; margin-bottom: 20px; background: #fffaf5;">
 			<p style="font-weight: bold; color: #f97316;">📦 INGREDIENTES</p>
@@ -82,6 +91,12 @@
 		
 		<button onclick="guardarReceta()" style="height: 50px;">💾 GUARDAR EN EL LEGADO</button>
 		<div id="mensaje" style="text-align:center; margin-top:10px;"></div>
+		
+		<div style="margin-top: 30px; border-top: 2px solid #fed7aa; padding-top: 15px;">
+			<p style="font-weight: bold; color: #f97316;">🔍 BUSCADOR DEL LEGADO</p>
+			<input type="text" id="buscadorNombre" oninput="ui.filtrarLegado()" placeholder="Buscar por nombre...">
+		</div>
+		
 		<div id="grid-recetas" style="margin-top:20px;"></div>
 		
 		<div id="pantalla-completa" style="display: none; padding-top: 10px;">
@@ -99,22 +114,32 @@
 		let borradorPasos = [];
 
 		const api = {
-			async guardarRecetaCompleta(nombre, ingredientes, pasos) {
-				const { data: receta, error: rError } = await supabaseClient.from('recetas').insert([{ nombre }]).select().single();
+			async guardarRecetaCompleta(nombre, categoria, ingredientes, pasos) {
+				const { data: receta, error: rError } = await supabaseClient.from('recetas')
+					.insert([{ nombre, categoria }])
+					.select().single();
 				if (rError) throw rError;
+
 				const ingData = ingredientes.map(i => ({ ...i, receta_id: receta.id }));
 				await supabaseClient.from('ingredientes').insert(ingData);
+
 				const pasosData = pasos.map((p, idx) => ({ ...p, receta_id: receta.id, orden: idx }));
 				await supabaseClient.from('pasos').insert(pasosData);
+				
 				return receta;
 			},
 			async obtenerTodoElLegado() {
-				const { data, error } = await supabaseClient.from('recetas').select(`id, nombre, created_at, ingredientes(*), pasos(*)`).order('created_at', { ascending: false });
-				if (error) throw error; return data;
+				const { data, error } = await supabaseClient.from('recetas')
+					.select(`id, nombre, categoria, created_at, ingredientes(*), pasos(*)`)
+					.order('created_at', { ascending: false });
+				if (error) throw error; 
+				return data;
 			}
 		};
 
 		const ui = {
+			recetasCache: [], // Para búsqueda rápida sin recargar de la base
+
 			ajustarInterfazPaso() {
 				const tipo = document.getElementById('paso-tipo').value;
 				const inputTemp = document.getElementById('paso-temp');
@@ -157,12 +182,10 @@
 				const n = document.getElementById('ing-nombre').value;
 				const c = parseFloat(document.getElementById('ing-cant').value);
 				const u = document.getElementById('ing-unidad').value;
-				if(!n) { alert("⚠️ Nombre de ingrediente vacío"); return; }
-				if(isNaN(c) || c <= 0) { alert(`⚠️ Cantidad de "${n}" no válida`); return; }
+				if(!n || isNaN(c)) { alert("⚠️ Revisa el nombre y cantidad del ingrediente"); return; }
 				borradorIngredientes.push({ nombre: n, cantidad: c, unidad: u });
-				this.render();
-				document.getElementById('ing-nombre').value = ""; 
-				document.getElementById('ing-cant').value = "";
+				this.renderBorrador();
+				document.getElementById('ing-nombre').value = ""; document.getElementById('ing-cant').value = "";
 			},
 
 			agregarPaso() {
@@ -175,21 +198,10 @@
 				const esVitro = ['sofreir', 'plancha', 'hervir', 'freir', 'guisar'].includes(tipo);
 				const tieneTiempo = (tiempo && tiempo > 0);
 
-				if ((esVitro || tipo === 'amasar') && !intensidad) {
-					alert("⚠️ Selecciona la intensidad o tipo de amasado");
-					return;
-				}
-
-				const necesitaTiempoSiempre = (tipo === 'hornear' || tipo === 'congelar' || tipo === 'reposar' || intensidad === 'Intenso');
-				if (necesitaTiempoSiempre && !tieneTiempo) {
-					alert(`⚠️ El tiempo es obligatorio para: ${tipo.toUpperCase()} (${intensidad || ''})`);
-					return;
-				}
-
-				if (!inst && !tieneTiempo && !intensidad && !temp) {
-					alert("⚠️ El paso no tiene ADN suficiente");
-					return;
-				}
+				if ((esVitro || tipo === 'amasar') && !intensidad) { alert("⚠️ Selecciona intensidad"); return; }
+				
+				const necesitaTiempo = (tipo === 'hornear' || tipo === 'congelar' || tipo === 'reposar' || intensidad === 'Intenso');
+				if (necesitaTiempo && !tieneTiempo) { alert("⚠️ El tiempo es obligatorio para este paso"); return; }
 
 				const instruccionFinal = inst.trim() === "" ? tipo.toUpperCase() : inst;
 
@@ -200,95 +212,95 @@
 					tiempo: tieneTiempo ? tiempo : null
 				});
 
-				this.render();
+				this.renderBorrador();
 				document.getElementById('paso-inst').value = "";
 				document.getElementById('paso-temp').value = "";
 				document.getElementById('paso-tiempo').value = "";
-				document.getElementById('paso-intensidad').value = "";
 			},
 
-			render() {
+			renderBorrador() {
 				document.getElementById('lista-ing-borrador').innerHTML = borradorIngredientes.map((i, idx) => 
 					`<div class="list-item"><span>🔹 ${i.cantidad}${i.unidad} - ${i.nombre}</span><span onclick="ui.quitarIng(${idx})" style="cursor:pointer">🗑️</span></div>`).join('');
+				document.getElementById('lista-pasos-borrador').innerHTML = borradorPasos.map((p, idx) => 
+					`<div class="list-item"><span>⏱️ ${p.instruccion}</span><span onclick="ui.quitarPaso(${idx})" style="cursor:pointer">🗑️</span></div>`).join('');
+			},
+
+			quitarIng(idx) { borradorIngredientes.splice(idx, 1); this.renderBorrador(); },
+			quitarPaso(idx) { borradorPasos.splice(idx, 1); this.renderBorrador(); },
+
+			async cargarLegado() {
+				try {
+					this.recetasCache = await api.obtenerTodoElLegado();
+					this.filtrarLegado();
+				} catch(e) { console.error("Error cargando legado:", e); }
+			},
+
+			filtrarLegado() {
+				const busqueda = document.getElementById('buscadorNombre').value.toLowerCase();
+				const grid = document.getElementById('grid-recetas');
 				
-				document.getElementById('lista-pasos-borrador').innerHTML = borradorPasos.map((p, idx) => {
-					let detalles = [];
-					if (p.temperatura) detalles.push(`${p.temperatura}°C`);
-					if (p.intensidad) detalles.push(p.intensidad);
-					if (p.tiempo) detalles.push(`${p.tiempo} min`);
-					const stringDetalles = detalles.length > 0 ? `(${detalles.join(' | ')})` : '';
-					return `<div class="list-item"><span>⏱️ ${p.instruccion} ${stringDetalles}</span><span onclick="ui.quitarPaso(${idx})" style="cursor:pointer">🗑️</span></div>`;
-				}).join('');
+				const filtradas = this.recetasCache.filter(r => r.nombre.toLowerCase().includes(busqueda));
+
+				grid.innerHTML = filtradas.map(r => `
+					<div onclick="ui.mostrarReceta('${r.id}')" style="background:white; border:1px solid #fed7aa; padding:15px; border-radius:12px; margin-bottom:10px; cursor:pointer; display: flex; justify-content: space-between; align-items: center;">
+						<div>
+							<span style="font-size: 0.7em; background: #fed7aa; padding: 2px 6px; border-radius: 4px; color: #a3442d; font-weight: bold;">${r.categoria || 'GENERAL'}</span><br>
+							<b style="color: #431407; font-size: 1.1em;">${r.nombre.toUpperCase()}</b><br>
+							<span style="font-size: 0.75em; color: #a3442d;">${r.ingredientes ? r.ingredientes.length : 0} ing. | ${r.pasos ? r.pasos.length : 0} pasos</span>
+						</div>
+						<span style="color: #f97316; font-weight: bold;">➔</span>
+					</div>
+				`).join('');
 			},
 
-			quitarIng(idx) { borradorIngredientes.splice(idx, 1); this.render(); },
-			
-			quitarPaso(idx) { borradorPasos.splice(idx, 1); this.render(); }, // <-- Coma añadida aquí
-			
 			mostrarReceta(id) {
-				api.obtenerTodoElLegado().then(recetas => {
-					const r = recetas.find(rec => rec.id === id);
-					if(!r) return;
+				const r = this.recetasCache.find(rec => rec.id === id);
+				if(!r) return;
 
-					document.querySelectorAll('.container > *:not(#pantalla-completa)').forEach(el => el.style.display = 'none');
-					const pc = document.getElementById('pantalla-completa');
-					const cont = document.getElementById('contenido-receta');
-					pc.style.display = 'block';
+				document.querySelectorAll('.container > *:not(#pantalla-completa)').forEach(el => el.style.display = 'none');
+				const pc = document.getElementById('pantalla-completa');
+				const cont = document.getElementById('contenido-receta');
+				pc.style.display = 'block';
 
-					cont.innerHTML = `
-						<h2 style="color: #f97316; font-size: 1.8em; margin-bottom:5px;">${r.nombre.toUpperCase()}</h2>
-						<div style="background: #fffaf5; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #fed7aa;">
-							<p style="font-weight: bold; margin-top:0; color: #431407;">🛒 INGREDIENTES</p>
-							<ul style="list-style: none; padding: 0; margin:0;">
-								${r.ingredientes.map(i => `<li style="margin-bottom: 5px;">⬜ ${i.cantidad}${i.unidad} ${i.nombre}</li>`).join('')}
-							</ul>
-						</div>
-						<div style="background: white;">
-							<p style="font-weight: bold; color: #ea580c; border-bottom: 2px solid #fed7aa; padding-bottom:5px;">👨‍🍳 PASO A PASO</p>
-							${r.pasos.map((p, idx) => {
-								const tieneTimer = p.tiempo && p.tiempo > 0;
-								const btnTimer = tieneTimer ? 
-									`<button id="btn-timer-${idx}" onclick="ui.iniciarTimer(${idx}, ${p.tiempo})" style="width:auto; display:inline-block; padding: 5px 10px; margin-top:5px; background:#431407; font-size:0.8em;">▶️ Iniciar ${p.tiempo} min</button>` : '';
-								
-								return `
-								<div id="paso-card-${idx}" style="margin-bottom: 20px; padding: 10px; border-left: 4px solid #f97316; background:#fffaf5; border-radius:0 8px 8px 0;">
-									<div style="font-weight: bold; font-size:0.8em; color:#f97316;">PASO ${idx + 1}</div>
-									<div style="font-size: 1.1em; color:#431407; margin: 5px 0;">${p.instruccion}</div>
-									<div style="font-size: 0.85em; font-weight: bold; color: #a3442d;">
-										${p.temperatura ? `🌡️ ${p.temperatura}°C ` : ''}
-										${p.intensidad ? `🔥 ${p.intensidad} ` : ''}
-										${p.tiempo ? `⏱️ <span id="timer-display-${idx}">${p.tiempo}:00</span>` : ''}
-									</div>
-									${btnTimer}
-								</div>`;
-							}).join('')}
-						</div>
-					`;
-				});
+				cont.innerHTML = `
+					<h2 style="color: #f97316; margin-bottom:5px;">${r.nombre.toUpperCase()}</h2>
+					<div style="background: #fffaf5; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #fed7aa;">
+						<p style="font-weight: bold; margin-top:0; color: #431407;">🛒 INGREDIENTES</p>
+						<ul style="list-style: none; padding: 0; margin:0;">
+							${r.ingredientes.map(i => `<li style="margin-bottom: 5px;">⬜ ${i.cantidad}${i.unidad} ${i.nombre}</li>`).join('')}
+						</ul>
+					</div>
+					<div>
+						<p style="font-weight: bold; color: #ea580c; border-bottom: 2px solid #fed7aa;">👨‍🍳 PASO A PASO</p>
+						${r.pasos.map((p, idx) => `
+							<div id="paso-card-${idx}" style="margin-bottom: 15px; padding: 10px; border-left: 4px solid #f97316; background:#fffaf5;">
+								<div style="font-weight: bold; font-size:0.8em; color:#f97316;">PASO ${idx + 1}</div>
+								<div style="font-size: 1.1em; color:#431407;">${p.instruccion}</div>
+								<div style="font-size: 0.85em; font-weight: bold; color: #a3442d; margin-top:5px;">
+									${p.temperatura ? `🌡️ ${p.temperatura}°C ` : ''}
+									${p.intensidad ? `🔥 ${p.intensidad} ` : ''}
+									${p.tiempo ? `⏱️ <span id="timer-display-${idx}">${p.tiempo}:00</span>` : ''}
+								</div>
+								${p.tiempo ? `<button onclick="ui.iniciarTimer(${idx}, ${p.tiempo})" id="btn-timer-${idx}" style="width:auto; padding:5px 10px; background:#431407; font-size:0.8em; margin-top:5px;">▶️ Iniciar Timer</button>` : ''}
+							</div>
+						`).join('')}
+					</div>`;
 			},
 
-			iniciarTimer(idx, minutos) {
-				let segundosTotales = minutos * 60;
+			iniciarTimer(idx, min) {
+				let seg = min * 60;
 				const display = document.getElementById(`timer-display-${idx}`);
 				const btn = document.getElementById(`btn-timer-${idx}`);
-				const card = document.getElementById(`paso-card-${idx}`);
+				btn.disabled = true; btn.style.opacity = "0.5";
 				
-				btn.disabled = true;
-				btn.style.opacity = "0.5";
-				btn.innerText = "⏳ En curso...";
-
 				const intervalo = setInterval(() => {
-					segundosTotales--;
-					const m = Math.floor(segundosTotales / 60);
-					const s = segundosTotales % 60;
+					seg--;
+					const m = Math.floor(seg / 60); const s = seg % 60;
 					display.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-
-					if (segundosTotales <= 0) {
+					if (seg <= 0) {
 						clearInterval(intervalo);
-						display.innerText = "✅ ¡TIEMPO CUMPLIDO!";
-						card.style.background = "#ffedd5"; 
-						card.style.borderColor = "#ea580c";
-						alert(`🔔 ¡Paso ${idx + 1} finalizado!`);
+						display.innerText = "✅ ¡LISTO!";
+						alert(`🔔 Paso ${idx + 1} completado`);
 					}
 				}, 1000);
 			},
@@ -296,41 +308,31 @@
 			cerrarReceta() {
 				document.getElementById('pantalla-completa').style.display = 'none';
 				document.querySelectorAll('.container > *:not(#pantalla-completa)').forEach(el => el.style.display = 'block');
-				document.getElementById('grid-recetas').style.display = 'block';
+				this.filtrarLegado();
 			}
-		}; // <-- El objeto ui se cierra correctamente aquí
+		};
 
 		async function guardarReceta() {
-			const msg = document.getElementById('mensaje');
 			const nombre = document.getElementById('nombreReceta').value;
-			if(!nombre || borradorIngredientes.length === 0) { alert("Faltan datos"); return; }
+			const categoria = document.getElementById('categoriaReceta').value;
+			const msg = document.getElementById('mensaje');
+			
+			if(!nombre || borradorIngredientes.length === 0 || !categoria) { 
+				alert("⚠️ Falta Nombre, Categoría o Ingredientes"); return; 
+			}
+
 			try {
-				msg.innerHTML = "⏳ Sincronizando ADN...";
-				const receta = await api.guardarRecetaCompleta(nombre, borradorIngredientes, borradorPasos);
-				msg.innerHTML = "✅ Legado Protegido";
-				borradorIngredientes = []; borradorPasos = []; ui.render();
+				msg.innerHTML = "⏳ Guardando ADN...";
+				await api.guardarRecetaCompleta(nombre, categoria, borradorIngredientes, borradorPasos);
+				msg.innerHTML = "✅ Guardado";
+				borradorIngredientes = []; borradorPasos = []; ui.renderBorrador();
 				document.getElementById('nombreReceta').value = "";
-				cargarLegado();
+				ui.cargarLegado();
 			} catch(e) { msg.innerHTML = "❌ Error: " + e.message; }
 		}
 
-		async function cargarLegado() {
-			try {
-				const recetas = await api.obtenerTodoElLegado();
-				document.getElementById('grid-recetas').innerHTML = recetas.map(r => `
-					<div onclick="ui.mostrarReceta('${r.id}')" style="background:white; border:1px solid #fed7aa; padding:15px; border-radius:12px; margin-bottom:10px; cursor:pointer; display: flex; justify-content: space-between; align-items: center;">
-						<div>
-							<b style="color: #431407;">${r.nombre.toUpperCase()}</b><br>
-							<span style="font-size: 0.75em; color: #a3442d;">${r.ingredientes.length} ing. | ${r.pasos.length} pasos</span>
-						</div>
-						<span style="color: #f97316;">➔</span>
-					</div>
-				`).join('');
-			} catch(e) { console.error(e); }
-		}
-
 		ui.ajustarInterfazPaso();
-		cargarLegado();
+		ui.cargarLegado();
 	</script>
 </body>
 </html>
