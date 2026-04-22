@@ -115,16 +115,25 @@
 				const temp = parseFloat(document.getElementById('paso-temp').value);
 				const tiempo = document.getElementById('paso-tiempo').value;
 
+				// 1. VALIDACIÓN DE TIEMPO OBLIGATORIO (HU4 - Ajuste Final)
+				const necesitaTiempo = (tipo === 'hornear' || tipo === 'congelar' || tipo === 'reposar');
+				if (necesitaTiempo && (!tiempo || tiempo <= 0)) {
+					alert(`⚠️ El tiempo es obligatorio para el paso: ${tipo.toUpperCase()}`);
+					return;
+				}
+
+				// 2. GESTIÓN DE INSTRUCCIÓN OPCIONAL
 				const instruccionFinal = inst.trim() === "" 
 					? `${tipo.charAt(0).toUpperCase() + tipo.slice(1)}` 
 					: inst;
 
+				// 3. VALIDACIONES DE TEMPERATURA
 				if (tipo === 'hornear' && (temp < 30 || temp > 300)) { 
-					alert(`⚠️ Para ${tipo}, la temperatura debe estar entre 30°C y 300°C`); 
+					alert(`⚠️ Para hornear, la temperatura debe estar entre 30°C y 300°C`); 
 					return; 
 				}
 				if (tipo === 'congelar' && (temp < -40 || temp > 15)) { 
-					alert(`⚠️ Para ${tipo}, el rango debe estar entre -40°C y 15°C`); 
+					alert(`⚠️ Para congelar/refrigerar, el rango es -40°C a 15°C`); 
 					return; 
 				}
 
@@ -133,7 +142,10 @@
 					temperatura: isNaN(temp) ? null : temp, 
 					tiempo: tiempo || null 
 				});
+				
 				this.render();
+				
+				// Limpiar campos
 				document.getElementById('paso-inst').value = "";
 				document.getElementById('paso-temp').value = "";
 				document.getElementById('paso-tiempo').value = "";
@@ -142,14 +154,10 @@
 			render() {
 				// Render de Ingredientes
 				document.getElementById('lista-ing-borrador').innerHTML = borradorIngredientes.map((i, idx) => 
-					`<div class="list-item">
-						<span>🔹 ${i.cantidad}${i.unidad} - ${i.nombre}</span>
-						<span onclick="ui.quitarIng(${idx})" style="cursor:pointer">🗑️</span>
-					</div>`).join('');
-
-				// Render de Pasos (Actualizado para incluir minutos)
+					`<div class="list-item"><span>🔹 ${i.cantidad}${i.unidad} - ${i.nombre}</span><span onclick="ui.quitarIng(${idx})" style="cursor:pointer">🗑️</span></div>`).join('');
+				
+				// Render de Pasos (Actualizado: Temp + Tiempo)
 				document.getElementById('lista-pasos-borrador').innerHTML = borradorPasos.map((p, idx) => {
-					// Construimos el detalle técnico (Temp y Tiempo)
 					let detalles = [];
 					if (p.temperatura) detalles.push(`${p.temperatura}°C`);
 					if (p.tiempo) detalles.push(`${p.tiempo} min`);
