@@ -140,10 +140,27 @@
 			},
 
 			render() {
+				// Render de Ingredientes
 				document.getElementById('lista-ing-borrador').innerHTML = borradorIngredientes.map((i, idx) => 
-					`<div class="list-item"><span>🔹 ${i.cantidad}${i.unidad} - ${i.nombre}</span><span onclick="ui.quitarIng(${idx})" style="cursor:pointer">🗑️</span></div>`).join('');
-				document.getElementById('lista-pasos-borrador').innerHTML = borradorPasos.map((p, idx) => 
-					`<div class="list-item"><span>⏱️ ${p.instruccion} ${p.temperatura ? `(${p.temperatura}°C)` : ''}</span><span onclick="ui.quitarPaso(${idx})" style="cursor:pointer">🗑️</span></div>`).join('');
+					`<div class="list-item">
+						<span>🔹 ${i.cantidad}${i.unidad} - ${i.nombre}</span>
+						<span onclick="ui.quitarIng(${idx})" style="cursor:pointer">🗑️</span>
+					</div>`).join('');
+
+				// Render de Pasos (Actualizado para incluir minutos)
+				document.getElementById('lista-pasos-borrador').innerHTML = borradorPasos.map((p, idx) => {
+					// Construimos el detalle técnico (Temp y Tiempo)
+					let detalles = [];
+					if (p.temperatura) detalles.push(`${p.temperatura}°C`);
+					if (p.tiempo) detalles.push(`${p.tiempo} min`);
+					
+					const stringDetalles = detalles.length > 0 ? `(${detalles.join(' | ')})` : '';
+
+					return `<div class="list-item">
+						<span>⏱️ ${p.instruccion} ${stringDetalles}</span>
+						<span onclick="ui.quitarPaso(${idx})" style="cursor:pointer">🗑️</span>
+					</div>`;
+				}).join('');
 			},
 
 			quitarIng(idx) { borradorIngredientes.splice(idx, 1); this.render(); },
