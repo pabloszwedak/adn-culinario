@@ -57,53 +57,104 @@
 	</div>
 
 	<script>
-	// ... (Configuración de Supabase igual) ...
+		const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
+		const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
+		const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-	let borradorIngredientes = [];
-	let borradorPasos = [];
+		let borradorIngredientes = [];
+		let borradorPasos = [];
 
-	const ui = {
-		ajustarCamposPaso() {
-			const tipo = document.getElementById('paso-tipo').value;
-			const campoTemp = document.getElementById('paso-temp');
-			// Si es batir o reposar, la temperatura suele ser opcional/ambiente
-			campoTemp.style.display = (tipo === 'batir' || tipo === 'reposar') ? 'none' : 'block';
-		},
-		agregarIngrediente() {
-			const n = document.getElementById('ing-nombre').value;
-			const c = document.getElementById('ing-cant').value;
-			if(!n || !c) return;
-			borradorIngredientes.push({ nombre: n, cantidad: c, unidad: 'g' });
-			this.renderBorradores();
-			document.getElementById('ing-nombre').value = ""; document.getElementById('ing-cant').value = "";
-		},
-		agregarPaso() {
-			const tipo = document.getElementById('paso-tipo').value;
-			const inst = document.getElementById('paso-inst').value;
-			const temp = parseFloat(document.getElementById('paso-temp').value) || null;
-			const tiempo = document.getElementById('paso-tiempo').value || null;
+		const api = {
+			async guardarRecetaCompleta(nombre, ingredientes, pasos) {
+				const { data: receta, error: rError } = await supabaseClient.from('recetas').insert([{ nombre }]).select().single();
+				if (rError) throw rError;
+				const ingData = ingredientes.map(i => ({ ...i, receta_id: receta.id }));
+				await supabaseClient.from('ingredientes').insert(ingData);
+				const pasosData = pasos.map((p, idx) => ({ ...p, receta_id: receta.id, orden: idx }));
+				await supabaseClient.from('pasos').insert(pasosData);
+				return receta;
+			},
+			async obtenerTodoElLegado() {
+				const { data, error } = await supabaseClient.from('recetas').select(`id, nombre, created_at, ingredientes(*), pasos(*)`).order('created_at', { ascending: false });
+				if (error) throw error; return data;
+			}
+		};
 
-			if (temp > 300) { alert("⚠️ Temperatura imposible para cocina."); return; }
-			if(!inst) return;
+		const ui = {
+			ajustarCamposPaso() {
+				const tipo = document.getElementById('paso-tipo').value;
+				document.getElementById('paso-temp').style.display = (tipo === 'batir' || tipo === 'reposar') ? 'none' : 'block';
+			},
+			agregarIngrediente() {
+				const n = document.getElementById('ing-nombre').value;
+				const c = parseFloat(document.getElementById('ing-cant').value);
+				const u = document.getElementById('ing-unidad').value;
+				
+				if(!n || isNaN(c) || c <= 0) { alert("⚠️ El peso debe ser mayor a 0"); return; }
+				
+				borradorIngredientes.push({ nombre: n, cantidad: c, unidad: u });
+				this.render();
+				document.getElementById('ing-nombre').value = ""; document.getElementById('ing-cant').value = "";
+			},
+			agregarPaso() {
+				const tipo = document.getElementById('paso-tipo').value;
+				const inst = document.getElementById('paso-inst').value;
+				const temp = parseFloat(document.getElementById('paso-temp').value);
+				const tiempo = document.getElementById('paso-tiempo').value;
 
-			borradorPasos.push({ instruccion: `[${tipo.toUpperCase()}] ${inst}`, temperatura: temp, tiempo });
-			this.renderBorradores();
-			document.getElementById('paso-inst').value = "";
-		},
-		renderBorradores() {
-			document.getElementById('lista-ing-borrador').innerHTML = borradorIngredientes.map((i, idx) => 
-				`<div class="list-item"><b>${i.cantidad}g</b> ${i.nombre} <span onclick="ui.quitarIng(${idx})" style="float:right; cursor:pointer">🗑️</span></div>`
-			).join('');
+				if(!inst) return;
+
+				// VALIDACIONES PO
+				if (tipo === 'hornear' && (temp < 30 || temp > 300)) {
+					alert("⚠️ Hornear debe estar entre 30°C y 300°C"); return;
+				}
+				if (tipo === 'congelar' && (temp < -40 || temp > 15)) {
+					alert("⚠️ Congelar/Refrigerar debe estar entre -40°C y 15°C"); return;
+				}
+
+				borradorPasos.push({ instruccion: `[${tipo.toUpperCase()}] ${inst}`, temperatura: temp || null, tiempo });
+				this.render();
+				document.getElementById('paso-inst').value = "";
+			},
+			render() {
+				document.getElementById('lista-ing-borrador').innerHTML = borradorIngredientes.map((i, idx) => 
+					`<div class="list-item">🔹 ${i.cantidad}${i.unidad} - ${i.nombre} <span onclick="ui.quitarIng(${idx})" style="float:right;cursor:pointer">🗑️</span></div>`).join('');
+				document.getElementById('lista-pasos-borrador').innerHTML = borradorPasos.map((p, idx) => 
+					`<div class="list-item">⏱️ ${p.instruccion} ${p.temperatura ? `(${p.temperatura}°C)` : ''} <span onclick="ui.quitarPaso(${idx})" style="float:right;cursor:pointer">🗑️</span></div>`).join('');
+			},
+			quitarIng(idx) { borradorIngredientes.splice(idx, 1); this.render(); },
+			quitarPaso(idx) { borradorPasos.splice(idx, 1); this.render(); }
+		};
+
+		// --- LA FUNCIÓN QUE FALTABA ---
+		async function guardarReceta() {
+			const msg = document.getElementById('mensaje');
+			const nombre = document.getElementById('nombreReceta').value;
+			if(!nombre || borradorIngredientes.length === 0) { alert("Falta nombre o ingredientes"); return; }
 			
-			document.getElementById('lista-pasos-borrador').innerHTML = borradorPasos.map((p, idx) => 
-				`<div class="list-item"><b>Paso ${idx+1}:</b> ${p.instruccion} ${p.temperatura ? `(${p.temperatura}ºC)` : ''} <span onclick="ui.quitarPaso(${idx})" style="float:right; cursor:pointer">🗑️</span></div>`
-			).join('');
-		},
-		quitarIng(idx) { borradorIngredientes.splice(idx, 1); this.renderBorradores(); },
-		quitarPaso(idx) { borradorPasos.splice(idx, 1); this.renderBorradores(); }
-	};
+			try {
+				msg.innerHTML = "⏳ Guardando...";
+				await api.guardarRecetaCompleta(nombre, borradorIngredientes, borradorPasos);
+				msg.innerHTML = "✅ Guardado con éxito";
+				borradorIngredientes = []; borradorPasos = []; ui.render();
+				document.getElementById('nombreReceta').value = "";
+				cargarLegado();
+			} catch(e) { msg.innerHTML = "❌ Error: " + e.message; }
+		}
 
-	// ... (Función guardarReceta usa borradorIngredientes y borradorPasos) ...
+		async function cargarLegado() {
+			const grid = document.getElementById('grid-recetas');
+			try {
+				const recetas = await api.obtenerTodoElLegado();
+				grid.innerHTML = recetas.map(r => `
+					<div style="background:white; border:2px solid #fed7aa; padding:15px; border-radius:12px; margin-bottom:10px;">
+						<div style="font-weight:bold;">${r.nombre.toUpperCase()}</div>
+						<div style="font-size:0.8em;">${r.ingredientes.length} ing. | ${r.pasos.length} pasos</div>
+					</div>
+				`).join('');
+			} catch(e) { console.error(e); }
+		}
+		cargarLegado();
 	</script>
 </body>
 </html>
