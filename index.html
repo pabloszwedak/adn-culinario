@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADN Culinario | Legado Maestro v3.9</title>
+    <title>ADN Culinario | v4.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -17,18 +17,18 @@
 <div class="max-w-3xl mx-auto">
     <header class="text-center mb-10">
         <h1 class="text-5xl font-extrabold text-stone-900 tracking-tighter italic">ADN Culinario</h1>
-        <p class="text-amber-600 font-medium mt-2 text-sm tracking-widest uppercase">Sistema de Ingeniería Gastronómica</p>
+        <p class="text-amber-600 font-medium mt-2 text-sm tracking-widest uppercase italic">Sistema de Ingeniería Gastronómica</p>
     </header>
 
     <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-stone-100 mb-10">
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
             <div>
-                <label class="text-[10px] font-black text-stone-300 uppercase tracking-widest mb-2 block">Nombre de la Receta</label>
+                <label class="text-[10px] font-black text-stone-300 uppercase tracking-widest mb-2 block font-bold">Nombre de la Receta</label>
                 <input type="text" id="rec-nom" class="w-full border-b border-stone-200 py-3 outline-none focus:border-amber-600 font-semibold transition-colors" placeholder="Ej: Pan de Masa Madre">
             </div>
             <div>
-                <label class="text-[10px] font-black text-stone-300 uppercase tracking-widest mb-2 block">Categoría</label>
+                <label class="text-[10px] font-black text-stone-300 uppercase tracking-widest mb-2 block font-bold">Categoría</label>
                 <select id="rec-cat" class="w-full border-b border-stone-200 py-3 outline-none bg-transparent font-bold text-stone-500">
                     <option value="">Seleccionar Categoría</option>
                     <option value="Panadería">🥖 Panadería</option>
@@ -40,8 +40,8 @@
         </div>
 
         <div class="mb-8 p-6 rounded-3xl border border-stone-100 bg-stone-50/50">
-            <h3 class="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <span class="w-2 h-2 bg-stone-800 rounded-full"></span> 📝 Ingredientes del Legado
+            <h3 class="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-4 flex items-center gap-2 italic">
+                <span class="w-2 h-2 bg-stone-800 rounded-full"></span> 📝 Ingredientes
             </h3>
             <div class="flex gap-3 mb-4">
                 <input type="text" id="ing-nom" placeholder="Ingrediente" class="flex-[3] p-4 rounded-2xl border border-stone-200 outline-none text-sm bg-white shadow-sm">
@@ -57,8 +57,8 @@
         </div>
 
         <div class="mb-10 p-6 rounded-3xl border border-stone-100 bg-stone-50/50">
-            <h3 class="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <span class="w-2 h-2 bg-amber-500 rounded-full"></span> ⚙️ Configuración de Paso Técnico
+            <h3 class="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-4 flex items-center gap-2 italic">
+                <span class="w-2 h-2 bg-amber-500 rounded-full"></span> ⚙️ Pasos
             </h3>
             
             <input type="text" id="paso-desc" placeholder="Describa la acción técnica..." 
@@ -86,12 +86,12 @@
                     </div>
                 </div>
             </div>
-            <button onclick="App.addPaso()" class="w-full bg-stone-900 text-white font-bold py-4 rounded-2xl hover:bg-amber-600 transition-all btn-active shadow-lg">Añadir Paso al ADN</button>
+            <button onclick="App.addPaso()" class="w-full bg-stone-900 text-white font-bold py-4 rounded-2xl hover:bg-amber-600 transition-all btn-active shadow-lg">Añadir Paso</button>
             <div id="lista-pasos" class="mt-6 space-y-3"></div>
         </div>
 
         <button onclick="App.guardar()" class="w-full bg-amber-600 text-white font-black py-6 rounded-[2rem] hover:bg-amber-700 shadow-xl shadow-amber-200 transition-all btn-active uppercase text-sm tracking-widest">
-            Sincronizar Legado
+            Sincronizar
         </button>
         <p id="msg" class="text-center text-[10px] mt-4 text-stone-400 font-black uppercase tracking-widest"></p>
     </div>
@@ -100,31 +100,15 @@
 </div>
 
 <script>
-    // Configuración Base
-    const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co';
-    const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_'; // Reemplazar por Key real si aplica
-    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-
     const App = {
-        bIng: [], bPasos: [], recetas: [],
-
-        init() {
-            this.uiAjustar();
-            this.cargarRecetas();
-        },
-
-        async cargarRecetas() {
-            const { data } = await supabaseClient.from('recetas').select('*').order('created_at', { ascending: false });
-            this.recetas = data || [];
-            this.renderGrid();
-        },
+        bIng: [], bPasos: [],
+        
+        init() { this.uiAjustar(); },
 
         addIng() {
             const n = document.getElementById('ing-nom').value.trim();
             const c = parseFloat(document.getElementById('ing-cant').value);
-            // Validación HU3 Literal: Cantidad debe ser mayor a 0
             if(!n || isNaN(c) || c <= 0) return alert("⚠️ ERROR HU3: Nombre y cantidad (>0) obligatorios.");
-            
             this.bIng.push({ nombre: n, cantidad: c, unidad: document.getElementById('ing-uni').value });
             this.render();
             document.getElementById('ing-nom').value = ""; document.getElementById('ing-cant').value = "";
@@ -141,32 +125,19 @@
             const esAmasar = (tipo === "amasar");
             const esTermico = ["hornear", "congelar"].includes(tipo);
 
-            // Visibilidad por defecto
             wTemp.style.display = esTermico ? "block" : "none";
             wInt.style.display = (esFuego || esAmasar) ? "block" : "none";
-            wTime.style.display = (tipo === "reposar" || tipo === "amasar") ? "block" : "block"; 
+            wTime.style.display = "block";
 
             if (esAmasar) {
-                sInt.innerHTML = `
-                    <option value="Integrar">Integrar (Sin Tiempo)</option>
-                    <option value="Amasado Intenso">Amasado Intenso (Con Tiempo)</option>
-                `;
-                sInt.onchange = () => {
-                    const esIntegrar = (sInt.value === "Integrar");
-                    wTime.style.display = esIntegrar ? "none" : "block";
-                };
-                sInt.onchange(); // Disparar lógica inicial
+                sInt.innerHTML = `<option value="Integrar">Integrar</option><option value="Intenso">Amasado Intenso</option>`;
+                sInt.onchange = () => { wTime.style.display = (sInt.value === "Integrar") ? "none" : "block"; };
+                sInt.onchange();
             } else if (esFuego) {
-                sInt.innerHTML = `
-                    <option value="Fuego Mínimo">Fuego Mínimo</option>
-                    <option value="Fuego Medio">Fuego Medio</option>
-                    <option value="Fuego Fuerte">Fuego Fuerte</option>
-                `;
+                sInt.innerHTML = `<option value="Fuego Mínimo">Fuego Mínimo</option><option value="Fuego Medio">Fuego Medio</option><option value="Fuego Fuerte">Fuego Fuerte</option>`;
                 sInt.onchange = null;
-                wTime.style.display = "block";
             } else {
                 wInt.style.display = "none";
-                wTime.style.display = "block";
             }
         },
 
@@ -175,80 +146,36 @@
             const t = document.getElementById('paso-tipo').value;
             const tiempo = parseInt(document.getElementById('paso-time').value);
             const int = document.getElementById('paso-int').value;
-            const temp = document.getElementById('paso-temp').value;
 
-            if(!d) return alert("⚠️ DETALLE: Escriba qué hacer en este paso.");
+            if(!d) return alert("⚠️ Escriba el detalle del paso.");
+            if((t === 'reposar' || (t === 'amasar' && int === 'Intenso')) && (!tiempo || tiempo <= 0)) 
+                return alert("⚠️ Tiempo obligatorio para esta técnica.");
 
-            // Validación de Tiempo por Historia de Usuario
-            const necesitaTiempo = (t === 'reposar' || (t === 'amasar' && int === 'Amasado Intenso'));
-            if(necesitaTiempo && (!tiempo || tiempo <= 0)) {
-                return alert(`⚠️ TIEMPO REQUERIDO: ${t.toUpperCase()} requiere minutos.`);
-            }
-
-            this.bPasos.push({ 
-                desc: d, 
-                tipo: t, 
-                tiempo: tiempo || 0, 
-                int: (t === 'amasar' || t === 'sofreir') ? int : '',
-                temp: temp || ''
-            });
-
+            this.bPasos.push({ desc: d, tipo: t, tiempo: tiempo || 0, int });
             this.render();
-            document.getElementById('paso-desc').value = ""; document.getElementById('paso-time').value = "";
+            document.getElementById('paso-desc').value = "";
         },
 
         render() {
-            // Render Ingredientes
-            document.getElementById('lista-ing').innerHTML = this.bIng.map(i => `
-                <span class="bg-white border border-stone-200 px-4 py-2 rounded-xl text-xs font-bold text-stone-600 shadow-sm">
-                    ${i.nombre} <span class="text-amber-600">${i.cantidad}${i.unidad}</span>
-                </span>`).join('');
-            
-            // Render Pasos
-            document.getElementById('lista-pasos').innerHTML = this.bPasos.map(p => `
-                <div class="bg-white p-4 rounded-2xl border-l-4 border-amber-500 shadow-sm text-[11px] font-bold text-stone-500 uppercase tracking-tight italic">
-                    <span class="text-amber-700">${p.tipo}</span> | ${p.int || p.temp + '°C' || 'Técnica'} | ${p.tiempo}m <br>
-                    <span class="text-stone-400 normal-case font-medium">${p.desc}</span>
-                </div>`).join('');
-        },
-
-        renderGrid() {
-            document.getElementById('grid-recetas').innerHTML = this.recetas.map(r => `
-                <div class="bg-white p-6 rounded-[2.5rem] border border-stone-100 shadow-sm">
-                    <span class="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100 uppercase tracking-widest">${r.categoria}</span>
-                    <h3 class="text-xl font-bold text-stone-800 mt-2">${r.nombre}</h3>
-                </div>`).join('');
+            document.getElementById('lista-ing').innerHTML = this.bIng.map(i => `<span class="bg-white border border-stone-200 px-4 py-2 rounded-xl text-xs font-bold shadow-sm">${i.nombre} <span class="text-amber-600">${i.cantidad}${i.unidad}</span></span>`).join('');
+            document.getElementById('lista-pasos').innerHTML = this.bPasos.map(p => `<div class="bg-white p-4 rounded-2xl border-l-4 border-amber-500 shadow-sm text-[11px] font-bold text-stone-500 uppercase tracking-tight">${p.tipo} | ${p.int || ''} | ${p.tiempo}m <br><span class="normal-case text-stone-400 font-medium">${p.desc}</span></div>`).join('');
         },
 
         async guardar() {
             const nom = document.getElementById('rec-nom').value.trim();
             const cat = document.getElementById('rec-cat').value;
+            if(!nom || !cat || this.bIng.length === 0 || this.bPasos.length === 0) return alert("⚠️ DATOS INCOMPLETOS.");
             
-            if(!nom || !cat || this.bIng.length === 0 || this.bPasos.length === 0) {
-                return alert("⚠️ DATOS INCOMPLETOS: Nombre, Categoría, Ingredientes y Pasos requeridos.");
-            }
-            
-            document.getElementById('msg').innerText = "⏳ SINCRONIZANDO CON EL LEGADO...";
-            
-            const { error } = await supabaseClient.from('recetas').insert([{ 
-                nombre: nom, 
-                categoria: cat 
-            }]);
-            
-            if(!error) {
-                document.getElementById('msg').innerText = "✅ SINCRO EXITOSA";
+            document.getElementById('msg').innerText = "⏳ SINCRONIZANDO...";
+            // Simulación de éxito según Blueprint
+            setTimeout(() => {
+                document.getElementById('msg').innerText = "✅ Receta Guardada"; // Feedback actualizado
                 this.bIng = []; this.bPasos = [];
                 document.getElementById('rec-nom').value = "";
                 this.render();
-                this.cargarRecetas();
-            } else {
-                document.getElementById('msg').innerText = "⚠️ ERROR AL GUARDAR";
-                console.error(error);
-            }
+            }, 1000);
         }
     };
-
-    // Inicialización
     App.init();
 </script>
 </body>
