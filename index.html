@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADN Culinario | v3.2</title>
+    <title>ADN Culinario | v3.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = { theme: { extend: { colors: { amber: { 600: '#d97706' } } } } }
@@ -13,14 +13,15 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfaf8; }
         .btn-active:active { transform: scale(0.98); }
+        .nt-warning { display: none !important; }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="p-4 md:p-10 text-stone-800">
 
 <div class="max-w-3xl mx-auto">
     <header class="text-center mb-10">
         <h1 class="text-5xl font-extrabold text-stone-900 tracking-tighter italic">ADN Culinario</h1>
-        <p class="text-amber-600 font-medium mt-2 text-sm tracking-widest uppercase">v3.2 | Restauración de Ingredientes y Pasos</p>
+        <p class="text-amber-600 font-medium mt-2 text-sm tracking-widest uppercase">v3.3 | Ingeniería y Estética Unificada</p>
     </header>
 
     <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-stone-200/50 border border-stone-100 mb-10">
@@ -28,7 +29,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
             <div>
                 <label class="text-[10px] font-black text-stone-300 uppercase tracking-widest mb-2 block">Nombre de la Receta</label>
-                <input type="text" id="rec-nom" class="w-full border-b border-stone-200 py-3 outline-none focus:border-amber-600 font-semibold text-stone-700 transition-colors" placeholder="Ej: Masa Madre 1940">
+                <input type="text" id="rec-nom" class="w-full border-b border-stone-200 py-3 outline-none focus:border-amber-600 font-semibold text-stone-700 transition-colors" placeholder="Ej: Pan de Campo">
             </div>
             <div>
                 <label class="text-[10px] font-black text-stone-300 uppercase tracking-widest mb-2 block">Categoría (HU2)</label>
@@ -37,6 +38,7 @@
                     <option value="Panadería">🥖 Panadería</option>
                     <option value="Salsas">🍯 Salsas</option>
                     <option value="Plato Principal">🥘 Plato Principal</option>
+                    <option value="Entrantes">🥗 Entrantes</option>
                 </select>
             </div>
         </div>
@@ -68,10 +70,21 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <select id="paso-tipo" onchange="App.uiAjustar()" class="p-4 rounded-2xl border border-stone-200 font-bold bg-white text-sm outline-none shadow-sm">
-                    <optgroup label="Técnicas">
+                    <optgroup label="Hornos y Frío">
                         <option value="hornear">🔥 Hornear</option>
-                        <option value="amasar">🥖 Amasar</option>
+                        <option value="congelar">❄️ Congelar / Refrigerar</option>
+                    </optgroup>
+                    <optgroup label="Vitrocerámica / Fuego">
                         <option value="sofreir">🥘 Sofreír</option>
+                        <option value="plancha">✨ Plancha</option>
+                        <option value="hervir">💧 Hervir / Cocer</option>
+                        <option value="freir">🍳 Freír</option>
+                        <option value="guisar">🍲 Guisar / Chup-chup</option>
+                    </optgroup>
+                    <optgroup label="Mecánicos">
+                        <option value="batir">🥣 Batir / Mezclar</option>
+                        <option value="reposar">⏳ Reposar</option>
+                        <option value="amasar">🥖 Amasar</option> 
                     </optgroup>
                 </select>
 
@@ -81,14 +94,18 @@
                     </div>
                     <div id="wrapper-int" class="flex-grow" style="display: none;">
                         <select id="paso-intensidad" class="w-full p-4 rounded-2xl border border-stone-200 bg-white font-bold text-amber-700 text-xs outline-none shadow-sm">
-                            <option value="">Intensidad</option>
-                            <option value="Medio">Fuego Medio</option>
+                            <option value="">-- Intensidad --</option>
+                            <option value="Fuego Mínimo">Fuego Mínimo</option>
+                            <option value="Fuego Suave">Fuego Suave</option>
+                            <option value="Fuego Medio">Fuego Medio</option>
+                            <option value="Fuego Fuerte">Fuego Fuerte</option>
+                            <option value="Fuego Máximo">Fuego Máximo</option>
                         </select>
                     </div>
                     <input type="number" id="paso-time" placeholder="Min" class="w-24 p-4 rounded-2xl border border-stone-200 outline-none font-bold text-center bg-white shadow-sm">
                 </div>
             </div>
-            <button onclick="App.addPaso()" class="w-full bg-stone-900 text-white font-bold py-4 rounded-2xl hover:bg-amber-600 transition-all btn-active shadow-lg shadow-stone-200">Añadir Paso</button>
+            <button onclick="App.addPaso()" class="w-full bg-stone-900 text-white font-bold py-4 rounded-2xl hover:bg-amber-600 transition-all btn-active shadow-lg">Añadir Paso</button>
             <div id="lista-pasos" class="mt-6 space-y-3"></div>
         </div>
 
@@ -97,30 +114,93 @@
         </button>
         <p id="msg" class="text-center text-[10px] mt-4 text-stone-400 font-black uppercase tracking-widest"></p>
     </div>
+    
+    <div id="grid-recetas" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"></div>
 </div>
 
 <script>
+    const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co';
+    const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
+    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
     const App = {
-        bIng: [], bPasos: [],
+        bIng: [], bPasos: [], recetas: [],
+
+        async init() {
+            const { data } = await supabaseClient.from('recetas').select('*').order('created_at', { ascending: false });
+            this.recetas = data || [];
+            this.renderGrid();
+            this.uiAjustar();
+        },
+
         addIng() {
-            const n = document.getElementById('ing-nom').value;
-            const c = document.getElementById('ing-cant').value;
-            if(!n || !c) return;
+            const n = document.getElementById('ing-nom').value.trim();
+            const c = parseFloat(document.getElementById('ing-cant').value);
+            if(!n || isNaN(c) || c <= 0) return alert("⚠️ INGREDIENTE: Nombre y cantidad (>0) obligatorios.");
             this.bIng.push({ nombre: n, cantidad: c, unidad: document.getElementById('ing-uni').value });
             this.render();
+            document.getElementById('ing-nom').value = ""; document.getElementById('ing-cant').value = "";
         },
+
         addPaso() {
-            const d = document.getElementById('paso-desc').value;
-            if(!d) return;
-            this.bPasos.push({ desc: d, tipo: document.getElementById('paso-tipo').value });
+            const d = document.getElementById('paso-desc').value.trim();
+            const t = document.getElementById('paso-tipo').value;
+            const tiempo = parseInt(document.getElementById('paso-time').value);
+            const int = document.getElementById('paso-intensidad').value;
+            const temp = parseFloat(document.getElementById('paso-temp').value) || 0;
+
+            // VALIDACIONES MAESTRAS HU5
+            if(!d) return alert("⚠️ DETALLE: Describe la acción técnica del paso.");
+            if((t === 'reposar' || t === 'amasar') && (isNaN(tiempo) || tiempo <= 0)) return alert(`⚠️ ${t.toUpperCase()}: Tiempo obligatorio.`);
+            
+            const esVitro = ["sofreir", "plancha", "hervir", "freir", "guisar"].includes(t);
+            if(esVitro && !int) return alert("⚠️ FUEGO: Selecciona la intensidad de la vitrocerámica.");
+            
+            if(t === 'hornear' && (temp < 1 || temp > 500)) return alert("⚠️ HORNEAR: Rango 1-500°C requerido.");
+
+            this.bPasos.push({ desc: d, tipo: t, tiempo, intensidad: int, temp });
             this.render();
+            document.getElementById('paso-desc').value = ""; document.getElementById('paso-time').value = "";
         },
+
+        uiAjustar() {
+            const tipo = document.getElementById('paso-tipo').value;
+            const esVitro = ["sofreir", "plancha", "hervir", "freir", "guisar", "amasar"].includes(tipo);
+            document.getElementById('wrapper-int').style.display = esVitro ? "block" : "none";
+            document.getElementById('wrapper-temp').style.display = (esVitro || tipo === "reposar") ? "none" : "block";
+        },
+
         render() {
             document.getElementById('lista-ing').innerHTML = this.bIng.map(i => `<span class="bg-white border border-stone-200 px-4 py-2 rounded-xl text-xs font-bold text-stone-600 shadow-sm">${i.nombre} <span class="text-amber-600">${i.cantidad}${i.unidad}</span></span>`).join('');
-            document.getElementById('lista-pasos').innerHTML = this.bPasos.map(p => `<div class="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm text-xs font-bold text-stone-500 uppercase tracking-tight italic border-l-4 border-l-amber-500">${p.desc}</div>`).join('');
+            document.getElementById('lista-pasos').innerHTML = this.bPasos.map(p => `<div class="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm text-[11px] font-bold text-stone-500 border-l-4 border-l-amber-500 uppercase tracking-tight italic">
+                <span class="text-amber-700">${p.tipo}</span> | ${p.intensidad || p.temp+'°C'} | ${p.tiempo}m <br>
+                <span class="text-stone-400 normal-case font-medium">${p.desc}</span>
+            </div>`).join('');
         },
-        uiAjustar() { /* Lógica de visibilidad */ }
+
+        renderGrid() {
+            document.getElementById('grid-recetas').innerHTML = this.recetas.map(r => `
+                <div class="bg-white p-6 rounded-[2.5rem] border border-stone-100 shadow-sm">
+                    <span class="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase tracking-widest">${r.categoria}</span>
+                    <h3 class="text-xl font-bold text-stone-800 mt-2">${r.nombre}</h3>
+                </div>`).join('');
+        },
+
+        async guardar() {
+            const n = document.getElementById('rec-nom').value.trim();
+            const c = document.getElementById('rec-cat').value;
+            if(!n || !c || this.bIng.length === 0 || this.bPasos.length === 0) return alert("⚠️ Faltan datos (Nombre, Categoría, Ingredientes o Pasos).");
+            
+            document.getElementById('msg').innerText = "⏳ PROTEGIENDO LEGADO...";
+            const { error } = await supabaseClient.from('recetas').insert([{ nombre: n, categoria: c }]);
+            if(!error) {
+                document.getElementById('msg').innerText = "✅ SINCRO EXITOSA";
+                this.bIng = []; this.bPasos = []; document.getElementById('rec-nom').value = "";
+                this.render(); this.init();
+            }
+        }
     };
+    App.init();
 </script>
 </body>
 </html>
