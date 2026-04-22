@@ -201,52 +201,68 @@
 				const intensidad = document.getElementById('paso-intensidad').value;
 				const tiempo = parseInt(document.getElementById('paso-tiempo').value);
 
-				// --- VALIDACIONES DE TÉCNICA REVISADAS ---
-				
-				// 1. Hornear (Sigue igual)
+				// --- BLOQUE DE VALIDACIONES INTEGRADAS ---
+
+				// 1. Hornear (Ahora con TIEMPO OBLIGATORIO)
 				if (tipo === 'hornear') {
-					if (isNaN(temp) || temp <= 0 || temp > 500) { alert("⚠️ Hornear: 1°C a 500°C"); return; }
+					if (isNaN(temp) || temp <= 0 || temp > 500) { 
+						alert("⚠️ HORNEAR: La temperatura debe estar entre 1°C y 500°C."); return; 
+					}
+					if (isNaN(tiempo) || tiempo <= 0) { 
+						alert("⚠️ HORNEAR: Debes indicar cuántos minutos requiere el horneado."); return; 
+					}
 				}
 				
-				// 2. Congelar/Refrigerar (Sigue igual)
+				// 2. Congelar/Refrigerar (Ahora con TIEMPO OBLIGATORIO)
 				if (tipo === 'congelar') {
-					if (isNaN(temp) || temp < -50 || temp > 15) { alert("⚠️ Congelar/Refrigerar: -50°C a 15°C"); return; }
+					if (isNaN(temp) || temp < -50 || temp > 15) { 
+						alert("⚠️ CONGELAR/REFRIGERAR: El rango debe estar entre -50°C y 15°C."); return; 
+					}
+					if (isNaN(tiempo) || tiempo <= 0) { 
+						alert("⚠️ CONGELAR/REFRIGERAR: Indica el tiempo de reposo en frío."); return; 
+					}
 				}
 				
-				// 3. Vitro (Sofreír, Plancha, etc.) -> CORREGIDO
+				// 3. Vitro (Acepta Intensidad O Temp, pero TIEMPO SIEMPRE OBLIGATORIO)
 				const esVitro = ['sofreir', 'plancha', 'hervir', 'freir', 'guisar'].includes(tipo);
 				if (esVitro) {
-					// Ahora acepta o temperatura numérica o que se haya seleccionado una intensidad (Fuego Medio, etc.)
 					const tieneTemp = !isNaN(temp) && temp > 0;
 					const tieneIntensidad = intensidad !== "" && intensidad !== null;
 					
 					if (!tieneTemp && !tieneIntensidad) { 
-						alert("⚠️ Vitro: Indica una temperatura o selecciona la intensidad (Fuego)."); return; 
+						alert("⚠️ VITRO: Indica una temperatura o selecciona la intensidad (Fuego)."); return; 
 					}
 					if (isNaN(tiempo) || tiempo <= 0) { 
-						alert("⚠️ Vitro: El tiempo es obligatorio."); return; 
+						alert("⚠️ VITRO: El tiempo de cocción es obligatorio."); return; 
 					}
 				}
 
-				// 4. Reposar y Amasar
+				// 4. Reposar y Amasar (TIEMPO OBLIGATORIO)
 				if (tipo === 'reposar' || tipo === 'amasar') {
-					if (isNaN(tiempo) || tiempo <= 0) { alert("⚠️ Tiempo obligatorio para Reposar/Amasar"); return; }
+					if (isNaN(tiempo) || tiempo <= 0) { 
+						alert(`⚠️ ${tipo.toUpperCase()}: Esta técnica requiere definir el tiempo.`); return; 
+					}
 				}
 
-				// Validación general de tiempo negativo
-				if (!isNaN(tiempo) && tiempo < 0) { alert("⚠️ El tiempo no puede ser negativo"); return; }
+				// Validación general de seguridad para el cronómetro
+				if (!isNaN(tiempo) && tiempo < 0) { 
+					alert("⚠️ El tiempo no puede ser negativo."); return; 
+				}
+
+				// --- PROCESAMIENTO DE DATOS ---
 
 				const instruccionFinal = inst === "" ? tipo.toUpperCase() : inst;
 
 				borradorPasos.push({
 					instruccion: `[${tipo.toUpperCase()}] ${instruccionFinal}`,
 					temperatura: !isNaN(temp) ? temp : null,
-					intensidad: intensidad || null, // Se guarda correctamente la intensidad seleccionada
+					intensidad: intensidad || null,
 					tiempo: !isNaN(tiempo) ? tiempo : null
 				});
 
 				this.renderBorrador();
-				// Limpieza
+				
+				// Limpieza de campos para el siguiente paso
 				document.getElementById('paso-inst').value = "";
 				document.getElementById('paso-temp').value = "";
 				document.getElementById('paso-tiempo').value = "";
