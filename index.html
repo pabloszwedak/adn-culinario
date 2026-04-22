@@ -9,37 +9,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfaf8; }
-        .recipe-card:hover { transform: translateY(-3px); }
+        .recipe-card:hover { transform: translateY(-3px); transition: all 0.2s; }
     </style>
 </head>
 <body class="p-4 md:p-10">
 
 <div class="max-w-3xl mx-auto" id="main-view">
-    <header class="text-center mb-12">
-        <h1 class="text-5xl font-extrabold text-stone-900 tracking-tighter">ADN Culinario</h1>
-        <p class="text-amber-700 font-medium mt-2">Protegiendo el Legado con Precisión Técnica</p>
+    <header class="text-center mb-10">
+        <h1 class="text-5xl font-extrabold text-stone-900 tracking-tighter italic">ADN Culinario</h1>
+        <p class="text-amber-700 font-medium mt-2">Protección del Legado Gastronómico</p>
     </header>
 
-    <div class="bg-white p-2 rounded-2xl shadow-sm border border-stone-200 mb-8 flex items-center px-4">
-        <span class="text-stone-400">🔍</span>
-        <input type="text" id="bus-nombre" placeholder="Buscar en el archivo..." 
-               class="w-full p-3 outline-none bg-transparent" oninput="App.filtrar()">
-    </div>
-
     <div class="bg-white p-8 rounded-[2rem] shadow-xl border border-stone-100 mb-10">
-        <div class="flex items-center gap-3 mb-6">
-            <div class="h-8 w-1.5 bg-amber-600 rounded-full"></div>
-            <h2 class="text-xl font-bold text-stone-800">Nueva Entrada de ADN</h2>
-        </div>
-        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div>
-                <label class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Nombre del Legado</label>
-                <input type="text" id="rec-nom" class="w-full border-b-2 border-stone-100 py-2 outline-none focus:border-amber-500 transition-colors" placeholder="Ej: Arroz de la Abuela">
+                <label class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Nombre de la Receta</label>
+                <input type="text" id="rec-nom" class="w-full border-b-2 border-stone-100 py-2 outline-none focus:border-amber-500" placeholder="Ej: Masa Madre 1940">
             </div>
             <div>
                 <label class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Categoría (HU2)</label>
-                <select id="rec-cat" class="w-full border-b-2 border-stone-100 py-2 outline-none focus:border-amber-500 bg-transparent">
+                <select id="rec-cat" class="w-full border-b-2 border-stone-100 py-2 outline-none bg-transparent">
                     <option value="Panadería">🥖 Panadería</option>
                     <option value="Salsas">🍯 Salsas</option>
                     <option value="Principal">🥘 Plato Principal</option>
@@ -49,79 +38,100 @@
         </div>
 
         <div class="mb-8">
-            <label class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Ingredientes</label>
-            <div class="flex gap-2 mt-2">
-                <input type="text" id="ing-nom" placeholder="Ingrediente" class="flex-grow bg-stone-50 p-3 rounded-xl outline-none focus:ring-2 focus:ring-amber-200">
-                <input type="number" id="ing-cant" placeholder="Cant." class="w-20 bg-stone-50 p-3 rounded-xl outline-none">
-                <select id="ing-uni" class="w-24 bg-stone-100 p-3 rounded-xl outline-none font-bold text-stone-600">
+            <h3 class="text-sm font-bold text-stone-800 mb-3 uppercase tracking-wider">📝 Ingredientes</h3>
+            <div class="flex gap-2">
+                <input type="text" id="ing-nom" placeholder="Ingrediente" class="flex-grow bg-stone-50 p-3 rounded-xl outline-none">
+                <input type="number" id="ing-cant" placeholder="0" class="w-20 bg-stone-50 p-3 rounded-xl outline-none">
+                <select id="ing-uni" class="w-24 bg-stone-100 p-3 rounded-xl outline-none font-bold">
                     <option value="gr">gr</option>
                     <option value="ml">ml</option>
-                    <option value="kg">kg</option>
-                    <option value="l">l</option>
                     <option value="pizca">pizca</option>
                 </select>
-                <button onclick="App.addIng()" class="bg-stone-900 text-white px-5 rounded-xl hover:bg-amber-600 transition-colors font-bold text-xl">+</button>
+                <button onclick="App.addIng()" class="bg-stone-900 text-white px-4 rounded-xl hover:bg-amber-600 font-bold">+</button>
             </div>
-            <div id="lista-ing" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+            <div id="lista-ing" class="mt-3 flex flex-wrap gap-2"></div>
         </div>
 
-        <button onclick="App.guardar()" class="w-full bg-amber-600 text-white font-bold py-5 rounded-2xl hover:bg-amber-700 shadow-lg shadow-amber-200 transition-all active:scale-[0.98]">
-            SINCRONIZAR CON EL LEGADO
+        <div class="mb-10 bg-stone-50 p-5 rounded-2xl border border-stone-100">
+            <h3 class="text-sm font-bold text-stone-800 mb-3 uppercase tracking-wider">⚙️ Ingeniería de Pasos</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <select id="pas-tipo" class="p-3 rounded-xl outline-none border border-stone-200" onchange="App.togglePasos()">
+                    <option value="Amasar">🥣 Amasar</option>
+                    <option value="Hornear">🔥 Hornear</option>
+                    <option value="Congelar">❄️ Congelar / Refrigerar</option>
+                    <option value="Fuego">🥘 Fuego (Sofreír/Hervir)</option>
+                </select>
+                <div class="flex gap-2">
+                    <input type="number" id="pas-temp" placeholder="Temp °C" class="w-1/2 p-3 rounded-xl border border-stone-200">
+                    <input type="number" id="pas-time" placeholder="Minutos" class="w-1/2 p-3 rounded-xl border border-stone-200">
+                </div>
+            </div>
+            <button onclick="App.addPaso()" class="w-full bg-stone-200 text-stone-700 font-bold p-3 rounded-xl hover:bg-stone-300">Añadir Paso al Proceso</button>
+            <div id="lista-pas" class="mt-4 space-y-2"></div>
+        </div>
+
+        <button onclick="App.guardar()" class="w-full bg-amber-600 text-white font-bold py-5 rounded-2xl hover:bg-amber-700 shadow-lg shadow-amber-200 transition-all">
+            GUARDAR LEGADO EN SUPABASE
         </button>
         <p id="msg" class="text-center text-xs mt-4 text-stone-400 font-medium"></p>
     </div>
 
-    <h2 class="text-2xl font-bold text-stone-800 mb-6 px-2">Archivo Guardado</h2>
     <div id="grid-recetas" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
 </div>
 
 <script>
-    // --- ÚNICA INSTANCIA PARA EVITAR SyntaxError ---
-    const _URL = "TU_URL";
-    const _KEY = "TU_KEY";
-    const client = supabase.createClient(_URL, _KEY);
+    // CREDENCIALES (Deben ser las tuyas)
+    const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co'; 
+    const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
+    const supabaseClient = supabase.createClient(_URL, _KEY);
 
     const App = {
         recetas: [],
         bIng: [],
+        bPas: [],
 
         async init() {
-            const { data } = await client.from('recetas').select('*').order('created_at', { ascending: false });
-            this.recetas = data || [];
-            this.renderGrid(this.recetas);
+            try {
+                const { data } = await supabaseClient.from('recetas').select('*').order('created_at', { ascending: false });
+                this.recetas = data || [];
+                this.renderGrid();
+            } catch(e) { console.error("Error de conexión"); }
         },
 
         addIng() {
             const n = document.getElementById('ing-nom').value;
             const c = document.getElementById('ing-cant').value;
             const u = document.getElementById('ing-uni').value;
-            if(!n || !c) return alert("⚠️ Ingrese nombre y cantidad.");
-            
+            if(!n || !c) return;
             this.bIng.push({ nombre: n, cantidad: c, unidad: u });
-            this.renderListIng();
-            document.getElementById('ing-nom').value = "";
-            document.getElementById('ing-cant').value = "";
+            this.renderListas();
+            document.getElementById('ing-nom').value = ""; document.getElementById('ing-cant').value = "";
         },
 
-        renderListIng() {
-            const cont = document.getElementById('lista-ing');
-            cont.innerHTML = this.bIng.map(i => `
-                <div class="flex justify-between items-center bg-white border border-stone-200 p-3 rounded-xl shadow-sm">
-                    <span class="font-semibold text-stone-700">${i.nombre}</span>
-                    <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-lg">${i.cantidad} ${i.unidad}</span>
-                </div>
-            `).join('');
+        addPaso() {
+            const tipo = document.getElementById('pas-tipo').value;
+            const temp = parseFloat(document.getElementById('pas-temp').value) || 0;
+            const time = parseInt(document.getElementById('pas-time').value) || 0;
+
+            // Validaciones HU5 del acuerdo original
+            if(tipo === "Hornear" && (temp < 1 || temp > 500 || time <= 0)) return alert("⚠️ Error: Hornear (1-500°C) y Tiempo son obligatorios.");
+            if(tipo === "Congelar" && (temp < -50 || temp > 15 || time <= 0)) return alert("⚠️ Error: Frío (-50 a 15°C) y Tiempo son obligatorios.");
+
+            this.bPas.push({ tipo, temperatura: temp, tiempo: time });
+            this.renderListas();
         },
 
-        renderGrid(lista) {
+        renderListas() {
+            document.getElementById('lista-ing').innerHTML = this.bIng.map(i => `<span class="bg-amber-100 text-amber-800 text-[10px] font-black px-3 py-1 rounded-full uppercase">${i.nombre} ${i.cantidad}${i.unidad}</span>`).join('');
+            document.getElementById('lista-pas').innerHTML = this.bPas.map(p => `<div class="bg-white p-3 rounded-lg border border-stone-200 text-xs font-bold text-stone-600 flex justify-between"><span>${p.tipo.toUpperCase()}</span><span>${p.temperatura}°C | ${p.tiempo} min</span></div>`).join('');
+        },
+
+        renderGrid() {
             const g = document.getElementById('grid-recetas');
-            g.innerHTML = lista.map(r => `
-                <div class="recipe-card bg-white p-6 rounded-[1.5rem] border border-stone-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="text-[10px] font-black uppercase tracking-tighter text-amber-600 bg-amber-50 px-2 py-1 rounded-md">${r.categoria}</span>
-                        <span class="text-stone-300 group-hover:text-amber-500">📖</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-stone-800">${r.nombre}</h3>
+            g.innerHTML = this.recetas.map(r => `
+                <div class="recipe-card bg-white p-6 rounded-3xl border border-stone-200 shadow-sm cursor-pointer">
+                    <span class="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2 py-1 rounded">${r.categoria}</span>
+                    <h3 class="text-xl font-bold text-stone-800 mt-2">${r.nombre}</h3>
                 </div>
             `).join('');
         },
@@ -129,23 +139,20 @@
         async guardar() {
             const n = document.getElementById('rec-nom').value;
             const c = document.getElementById('rec-cat').value;
-            if(!n || this.bIng.length === 0) return alert("⚠️ Se requiere nombre e ingredientes.");
+            if(!n || this.bIng.length === 0) return alert("Faltan datos");
 
-            document.getElementById('msg').innerText = "⏳ Sincronizando con Supabase...";
-            const { error } = await client.from('recetas').insert([{ nombre: n, categoria: c }]);
+            document.getElementById('msg').innerText = "⏳ Sincronizando...";
+            const { error } = await supabaseClient.from('recetas').insert([{ nombre: n, categoria: c }]);
             
             if(!error) {
-                document.getElementById('msg').innerText = "✅ ADN PROTEGIDO EN LA NUBE";
-                this.bIng = [];
-                this.renderListIng();
+                document.getElementById('msg').innerText = "✅ ADN PROTEGIDO";
+                this.bIng = []; this.bPas = [];
+                this.renderListas();
                 this.init();
             }
         },
 
-        filtrar() {
-            const t = document.getElementById('bus-nombre').value.toLowerCase();
-            this.renderGrid(this.recetas.filter(r => r.nombre.toLowerCase().includes(t)));
-        }
+        filtrar() { /* Lógica de búsqueda HU3 */ }
     };
 
     App.init();
