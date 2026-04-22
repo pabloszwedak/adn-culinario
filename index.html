@@ -205,6 +205,7 @@
 
 				const instruccionFinal = inst.trim() === "" ? tipo.toUpperCase() : inst;
 
+				// GUARDADO EN EL ARRAY GLOBAL
 				borradorPasos.push({
 					instruccion: `[${tipo.toUpperCase()}] ${instruccionFinal}`,
 					temperatura: (!esVitro && tipo !== 'amasar' && temp) ? temp : null,
@@ -212,19 +213,22 @@
 					tiempo: tieneTiempo ? tiempo : null
 				});
 
-				this.renderBorrador();
+				this.renderBorrador(); // Llamada unificada
+				
+				// LIMPIEZA DE CAMPOS
 				document.getElementById('paso-inst').value = "";
 				document.getElementById('paso-temp').value = "";
 				document.getElementById('paso-tiempo').value = "";
-				document.getElementById('paso-intensidad').value = ""; // Limpia también la intensidad
+				document.getElementById('paso-intensidad').value = "";
 			},
 
 			renderBorrador() {
 				// Render de Ingredientes
 				document.getElementById('lista-ing-borrador').innerHTML = borradorIngredientes.map((i, idx) => 
-					`<div class="list-item"><span>🔹 ${i.cantidad}${i.unidad} - ${i.nombre}</span><span onclick="ui.quitarIng(${idx})" style="cursor:pointer">🗑️</span></div>`).join('');
+					`<div class="list-item"><span>🔹 ${i.cantidad}${i.unidad} - ${i.nombre}</span><span onclick="ui.quitarIng(${idx})" style="cursor:pointer">🗑️</span></div>`
+				).join('');
 				
-				// Render de Pasos (CORREGIDO: Ahora muestra parámetros)
+				// Render de Pasos con parámetros visibles
 				document.getElementById('lista-pasos-borrador').innerHTML = borradorPasos.map((p, idx) => {
 					let detalles = [];
 					if (p.temperatura) detalles.push(`${p.temperatura}°C`);
@@ -238,6 +242,7 @@
 					</div>`;
 				}).join('');
 			},
+
 			quitarIng(idx) { borradorIngredientes.splice(idx, 1); this.renderBorrador(); },
 			quitarPaso(idx) { borradorPasos.splice(idx, 1); this.renderBorrador(); },
 
