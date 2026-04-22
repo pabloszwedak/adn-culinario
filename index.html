@@ -87,74 +87,60 @@
         }
     };
 
-    const ui = {
-        ajustarCamposPaso() {
-            const tipo = document.getElementById('paso-tipo').value;
-            document.getElementById('paso-temp').style.display = (tipo === 'batir' || tipo === 'reposar') ? 'none' : 'block';
-        },
-        agregarIngrediente() {
-            const n = document.getElementById('ing-nombre').value;
-            const c = parseFloat(document.getElementById('ing-cant').value);
-            const u = document.getElementById('ing-unidad').value;
-            
-            if(!n || isNaN(c) || c <= 0) { alert("⚠️ El peso debe ser mayor a 0"); return; }
-            
-            borradorIngredientes.push({ nombre: n, cantidad: c, unidad: u });
-            this.render();
-            document.getElementById('ing-nombre').value = ""; document.getElementById('ing-cant').value = "";
-        },
-        agregarPaso() {
-            const tipo = document.getElementById('paso-tipo').value;
-            const inst = document.getElementById('paso-inst').value;
-            const temp = parseFloat(document.getElementById('paso-temp').value);
-            const tiempo = document.getElementById('paso-tiempo').value;
+	const ui = {
+		// ... ajustarCamposPaso igual ...
 
-            if(!inst) return;
+		agregarIngrediente() {
+			const n = document.getElementById('ing-nombre').value;
+			const c = parseFloat(document.getElementById('ing-cant').value);
+			const u = document.getElementById('ing-unidad').value;
+			
+			// CAMBIO: Mensaje específico por campo
+			if(!n) { alert("⚠️ Falta el nombre del ingrediente"); return; }
+			if(isNaN(c) || c <= 0) { 
+				alert(`⚠️ La cantidad de "${n}" debe ser mayor a 0`); 
+				return; 
+			}
+			
+			borradorIngredientes.push({ nombre: n, cantidad: c, unidad: u });
+			this.render();
+			document.getElementById('ing-nombre').value = ""; 
+			document.getElementById('ing-cant').value = "";
+		},
 
-            if (tipo === 'hornear' && (temp < 30 || temp > 300)) { alert("⚠️ Hornear debe estar entre 30°C y 300°C"); return; }
-            if (tipo === 'congelar' && (temp < -40 || temp > 15)) { alert("⚠️ Congelar debe estar entre -40°C y 15°C"); return; }
+		agregarPaso() {
+			const tipo = document.getElementById('paso-tipo').value;
+			let inst = document.getElementById('paso-inst').value; 
+			const temp = parseFloat(document.getElementById('paso-temp').value);
+			const tiempo = document.getElementById('paso-tiempo').value;
 
-            borradorPasos.push({ instruccion: `[${tipo.toUpperCase()}] ${inst}`, temperatura: temp || null, tiempo });
-            this.render();
-            document.getElementById('paso-inst').value = "";
-        },
-        render() {
-            document.getElementById('lista-ing-borrador').innerHTML = borradorIngredientes.map((i, idx) => 
-                `<div class="list-item"><span>🔹 ${i.cantidad}${i.unit || i.unidad} - ${i.nombre}</span><span onclick="ui.quitarIng(${idx})" style="cursor:pointer">🗑️</span></div>`).join('');
-            document.getElementById('lista-pasos-borrador').innerHTML = borradorPasos.map((p, idx) => 
-                `<div class="list-item"><span>⏱️ ${p.instruccion} ${p.temperatura ? `(${p.temperatura}°C)` : ''}</span><span onclick="ui.quitarPaso(${idx})" style="cursor:pointer">🗑️</span></div>`).join('');
-        },
-        quitarIng(idx) { borradorIngredientes.splice(idx, 1); this.render(); },
-        quitarPaso(idx) { borradorPasos.splice(idx, 1); this.render(); }
-    };
+			// CAMBIO: Instrucción opcional. Si está vacía, usamos el tipo.
+			const instruccionFinal = inst.trim() === "" 
+				? `${tipo.charAt(0).toUpperCase() + tipo.slice(1)}` 
+				: inst;
 
-    async function guardarReceta() {
-        const msg = document.getElementById('mensaje');
-        const nombre = document.getElementById('nombreReceta').value;
-        if(!nombre || borradorIngredientes.length === 0) { alert("Falta nombre o ingredientes"); return; }
-        try {
-            msg.innerHTML = "⏳ Guardando...";
-            await api.guardarRecetaCompleta(nombre, borradorIngredientes, borradorPasos);
-            msg.innerHTML = "✅ Guardado con éxito";
-            borradorIngredientes = []; borradorPasos = []; ui.render();
-            document.getElementById('nombreReceta').value = "";
-            cargarLegado();
-        } catch(e) { msg.innerHTML = "❌ Error: " + e.message; }
-    }
+			// Validaciones de rango con nombre de tipo para claridad
+			if (tipo === 'hornear' && (temp < 30 || temp > 300)) { 
+				alert(`⚠️ Para ${tipo}, la temperatura debe estar entre 30°C y 300°C`); 
+				return; 
+			}
+			if (tipo === 'congelar' && (temp < -40 || temp > 15)) { 
+				alert(`⚠️ Para ${tipo}, el rango debe estar entre -40°C y 15°C`); 
+				return; 
+			}
 
-    async function cargarLegado() {
-        const grid = document.getElementById('grid-recetas');
-        try {
-            const recetas = await api.obtenerTodoElLegado();
-            grid.innerHTML = recetas.map(r => `
-                <div style="background:white; border:2px solid #fed7aa; padding:15px; border-radius:12px; margin-bottom:10px;">
-                    <div style="font-weight:bold;">${r.nombre.toUpperCase()}</div>
-                    <div style="font-size:0.8em;">${r.ingredientes.length} ing. | ${r.pasos.length} pasos</div>
-                </div>
-            `).join('');
-        } catch(e) { console.error(e); }
-    }
-    cargarLegado();
+			borradorPasos.push({ 
+				instruccion: `[${tipo.toUpperCase()}] ${instruccionFinal}`, 
+				temperatura: temp || null, 
+				tiempo: tiempo || null 
+			});
+			this.render();
+			document.getElementById('paso-inst').value = "";
+			document.getElementById('paso-temp').value = "";
+			document.getElementById('paso-tiempo').value = "";
+		},
+		// ... resto de ui.render igual ...
+	};
 </script>
 </body>
 </html>
