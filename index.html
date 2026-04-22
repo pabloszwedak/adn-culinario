@@ -3,106 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADN Culinario - Legado Familiar</title>
+    <title>ADN Culinario | Elite Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #c2410c; /* Tierra / Tradición */
-            --bg: #fffaf5;
-            --card-bg: #ffffff;
-            --text: #431407;
-            --accent: #fef3c7;
-            --border: #fde68a;
+            --primary: #854d0e; /* Marrón Canela */
+            --accent: #f59e0b; /* Ambar */
+            --bg: #fafaf9;
+            --surface: #ffffff;
+            --text-main: #1c1917;
+            --text-muted: #78716c;
+            --border: #e7e5e4;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
 
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.6; }
-        .main-container { max-width: 600px; margin: auto; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { color: var(--primary); font-size: 2.2rem; margin: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding: 20px; }
+        .app-container { max-width: 700px; margin: 40px auto; }
         
-        .card { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .section-title { font-weight: bold; border-left: 4px solid var(--primary); padding-left: 10px; margin-bottom: 15px; color: var(--primary); }
+        /* Tipografía y Header */
+        header { text-align: center; margin-bottom: 40px; }
+        header h1 { font-weight: 700; font-size: 2.5rem; letter-spacing: -0.025em; margin: 0; color: var(--primary); }
+        header p { color: var(--text-muted); font-size: 1rem; margin-top: 8px; }
 
-        input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
-        .btn:hover { opacity: 0.9; }
-        .btn-add { background: #78350f; margin-bottom: 15px; }
+        /* Tarjetas */
+        .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); padding: 30px; margin-bottom: 24px; }
+        .section-title { font-weight: 600; font-size: 1.1rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--primary); }
 
-        .item-list { font-size: 0.9rem; background: var(--accent); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border); }
-        .recipe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .recipe-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; text-align: center; transition: transform 0.1s; }
-        .recipe-card:hover { transform: scale(1.02); }
+        /* Inputs Modernos */
+        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+        input, select { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; transition: all 0.2s; background: #fff; margin-bottom: 16px; box-sizing: border-box; }
+        input:focus, select:focus { outline: none; border-color: var(--accent); ring: 2px solid var(--accent); }
 
-        #pantalla-completa { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        /* Botones */
+        .btn { cursor: pointer; padding: 12px 24px; border-radius: 8px; font-weight: 600; border: none; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; }
+        .btn-primary { background: var(--primary); color: white; width: 100%; }
+        .btn-primary:hover { background: #713f12; transform: translateY(-1px); }
+        .btn-ghost { background: #f5f5f4; color: var(--text-main); width: auto; border: 1px solid var(--border); }
+        .btn-ghost:hover { background: #e7e5e4; }
+
+        /* Listas y Badges */
+        .item-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 0.95rem; }
+        .badge { background: var(--accent); color: white; padding: 2px 8px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; }
+
+        /* Grid de Recetas */
+        .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .recipe-card { background: white; padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); transition: all 0.3s; cursor: pointer; }
+        .recipe-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+
+        /* Modal Detalle */
+        #pantalla-completa { display: none; position: fixed; inset: 0; background: white; z-index: 50; padding: 40px; overflow-y: auto; }
+        
+        .flex-group { display: flex; gap: 12px; }
     </style>
 </head>
 <body>
 
-<div class="main-container" id="app-view">
-    <div class="header">
+<div class="app-container" id="main-view">
+    <header>
         <h1>ADN Culinario</h1>
-        <p>— Preservando el legado familiar —</p>
+        <p>Precisión técnica para legados gastronómicos</p>
+    </header>
+
+    <div class="card">
+        <input type="text" id="bus-nombre" placeholder="Buscar por nombre de receta..." oninput="App.filtrar()">
     </div>
 
     <div class="card">
-        <input type="text" id="buscadorNombre" placeholder="🔍 Buscar receta..." oninput="UI.filtrar()">
-    </div>
-
-    <div class="card">
-        <div class="section-title">NUEVA RECETA</div>
-        <input type="text" id="nombreReceta" placeholder="Nombre (ej: Pan de la Abuela)">
-        <select id="categoriaReceta">
-            <option value="">Seleccionar Categoría (HU2)</option>
-            <option value="Panadería">🥖 Panadería</option>
-            <option value="Repostería">🍰 Repostería</option>
-            <option value="Salsas">🍯 Salsas</option>
-            <option value="Plato Principal">🥘 Plato Principal</option>
-        </select>
-
-        <div style="display: flex; gap: 5px;">
-            <input type="text" id="ing-nom" placeholder="Ingrediente" style="flex: 2;">
-            <input type="number" id="ing-cant" placeholder="Gr/Ml" style="flex: 1;">
-            <button class="btn" style="width: 40px;" onclick="App.addIng()">+</button>
-        </div>
-        <div id="lista-ing" class="item-list" style="display:none;"></div>
-
-        <div class="section-title">PASOS TÉCNICOS</div>
-        <select id="paso-tipo" onchange="UI.ajustarCamposPaso()">
-            <option value="Amasar">🥣 Amasar</option>
-            <option value="Hornear">🔥 Hornear</option>
-            <option value="Congelar">❄️ Congelar / Refrigerar</option>
-            <option value="Sofreír">🥘 Sofreír / Fuego</option>
-            <option value="Reposar">⏳ Reposar</option>
-        </select>
+        <div class="section-title">✨ Definir Nueva Receta</div>
         
-        <div id="campos-dinamicos">
-            <input type="number" id="paso-temp" placeholder="Temperatura °C">
-            <select id="paso-intensidad" style="display:none;">
-                <option value="">Intensidad de Fuego/Amasado</option>
-                <option value="Mínimo">Mínimo</option>
-                <option value="Medio">Medio</option>
-                <option value="Máximo">Máximo</option>
-            </select>
-            <input type="number" id="paso-time" placeholder="Minutos">
+        <div class="flex-group">
+            <div style="flex: 2;">
+                <label>Nombre del Plato</label>
+                <input type="text" id="rec-nom" placeholder="Ej: Risotto de Setas 1950">
+            </div>
+            <div style="flex: 1;">
+                <label>Categoría</label>
+                <select id="rec-cat">
+                    <option value="Principal">Plato Principal</option>
+                    <option value="Salsas">Salsas</option>
+                    <option value="Panadería">Panadería</option>
+                    <option value="Repostería">Repostería</option>
+                </select>
+            </div>
         </div>
-        <button class="btn btn-add" onclick="App.addPaso()">Añadir Paso</button>
-        <div id="lista-pasos" class="item-list" style="display:none;"></div>
 
-        <button class="btn" onclick="App.guardarEnNube()">PROTEGER LEGADO (HU1)</button>
-        <div id="mensaje" style="text-align:center; font-size: 0.8rem; margin-top: 10px;"></div>
+        <label>Ingredientes (HU5: Cantidad Exacta)</label>
+        <div class="flex-group">
+            <input type="text" id="ing-nom" placeholder="Ingrediente" style="flex: 2;">
+            <input type="number" id="ing-cant" placeholder="Cant." style="flex: 0.8;">
+            <select id="ing-uni" style="flex: 1;">
+                <option value="gr">Gramos (gr)</option>
+                <option value="ml">Mililitros (ml)</option>
+                <option value="kg">Kilogramos (kg)</option>
+                <option value="l">Litros (l)</option>
+                <option value="pizca">Pizca</option>
+            </select>
+            <button class="btn btn-ghost" onclick="App.addIng()" style="height: 46px;">+</button>
+        </div>
+        <div id="lista-ing" style="margin-bottom: 20px;"></div>
+
+        <div class="section-title">⚙️ Ingeniería de Pasos</div>
+        <select id="pas-tipo" onchange="UI.toggleCampos()">
+            <option value="Amasar">Amasar</option>
+            <option value="Hornear">Hornear</option>
+            <option value="Congelar">Congelar / Refrigerar</option>
+            <option value="Vitrocerámica">Fuego (Sofreír/Hervir)</option>
+            <option value="Reposar">Reposar</option>
+        </select>
+
+        <div id="pas-dinamico" class="flex-group">
+            <input type="number" id="pas-temp" placeholder="Temp °C">
+            <select id="pas-int" style="display:none;">
+                <option value="Bajo">Fuego Bajo</option>
+                <option value="Medio">Fuego Medio</option>
+                <option value="Alto">Fuego Alto</option>
+            </select>
+            <input type="number" id="pas-time" placeholder="Minutos">
+        </div>
+        <button class="btn btn-ghost" style="width:100%; margin-bottom: 20px;" onclick="App.addPaso()">+ Añadir Paso al Proceso</button>
+        <div id="lista-pas"></div>
+
+        <button class="btn btn-primary" onclick="App.guardar()">GUARDAR EN LA NUBE</button>
+        <p id="msg" style="text-align: center; font-size: 0.8rem; margin-top: 10px;"></p>
     </div>
 
-    <div class="section-title">EL LEGADO GUARDADO</div>
+    <div class="section-title">📚 El Archivo del Legado</div>
     <div id="grid-recetas" class="recipe-grid"></div>
 </div>
 
 <div id="pantalla-completa">
-    <button class="btn btn-add" onclick="UI.cerrarDetalle()" style="width: auto;">⬅ Volver</button>
-    <div id="detalle-contenido"></div>
+    <button class="btn btn-ghost" onclick="UI.close()">← Volver al Archivo</button>
+    <hr style="margin: 30px 0; border: 0; border-top: 1px solid var(--border);">
+    <div id="det-cont"></div>
 </div>
 
 <script>
-    // --- MOTOR DE DATOS (HU1) ---
+    // --- NÚCLEO LÓGICO ---
     const _URL = "TU_URL";
     const _KEY = "TU_KEY";
     const supabase = supabase.createClient(_URL, _KEY);
@@ -110,101 +148,90 @@
     const App = {
         recetas: [],
         bIng: [],
-        bPasos: [],
+        bPas: [],
 
         async init() {
-            const { data } = await supabase.from('recetas').select('*');
+            const { data } = await supabase.from('recetas').select('*').order('created_at', { ascending: false });
             this.recetas = data || [];
             UI.renderGrid(this.recetas);
         },
 
-        // --- VALIDACIONES HU5 (INTEGRIDAD TOTAL) ---
         addIng() {
             const n = document.getElementById('ing-nom').value;
             const c = parseFloat(document.getElementById('ing-cant').value);
-            if(!n || c <= 0) return alert("⚠️ Cantidad > 0 obligatoria.");
-            this.bIng.push({ nombre: n, cantidad: c });
-            UI.renderBorradores();
+            const u = document.getElementById('ing-uni').value;
+            if(!n || c <= 0) return alert("⚠️ Error: Cantidad debe ser mayor a 0.");
+            this.bIng.push({ nombre: n, cantidad: c, unidad: u }); // UNIDAD PRESERVADA
+            UI.renderLists();
         },
 
         addPaso() {
-            const tipo = document.getElementById('paso-tipo').value;
-            const temp = parseFloat(document.getElementById('paso-temp').value) || 0;
-            const time = parseInt(document.getElementById('paso-time').value) || 0;
-            const int = document.getElementById('paso-intensidad').value;
+            const tipo = document.getElementById('pas-tipo').value;
+            const temp = parseFloat(document.getElementById('pas-temp').value) || 0;
+            const time = parseInt(document.getElementById('pas-time').value) || 0;
+            const int = document.getElementById('pas-int').value;
 
-            // Recobrando validaciones del index.html original
-            if(tipo === "Hornear" && (temp < 1 || temp > 500 || time <= 0)) 
-                return alert("⚠️ Hornear: 1-500°C y tiempo obligatorio.");
+            // VALIDACIONES BLINDADAS HU5
+            if(tipo === "Hornear" && (temp < 1 || temp > 500 || time <= 0)) return alert("⚠️ Error Hornear: 1-500°C requerido.");
+            if(tipo === "Congelar" && (temp < -50 || temp > 15 || time <= 0)) return alert("⚠️ Error Frío: Rango -50 a 15°C.");
             
-            if(tipo === "Congelar" && (temp < -50 || temp > 15 || time <= 0))
-                return alert("⚠️ Frío: -50 a 15°C y tiempo obligatorio.");
-
-            if(["Sofreír", "Amasar"].includes(tipo) && time <= 0)
-                return alert("⚠️ Tiempo obligatorio para Timers.");
-
-            this.bPasos.push({ tipo, temperatura: temp, tiempo: time, intensidad: int });
-            UI.renderBorradores();
+            this.bPas.push({ tipo, temperatura: temp, tiempo: time, intensidad: int });
+            UI.renderLists();
         },
 
-        async guardarEnNube() {
-            const nom = document.getElementById('nombreReceta').value;
-            const cat = document.getElementById('categoriaReceta').value;
-            if(!nom || !cat || this.bIng.length === 0) return alert("⚠️ Datos incompletos.");
+        async guardar() {
+            const n = document.getElementById('rec-nom').value;
+            const c = document.getElementById('rec-cat').value;
+            if(!n || this.bIng.length === 0) return alert("⚠️ Receta incompleta.");
             
-            document.getElementById('mensaje').innerText = "⏳ Sincronizando...";
-            const { data, error } = await supabase.from('recetas').insert([{ nombre: nom, categoria: cat }]).select();
+            document.getElementById('msg').innerText = "Sincronizando con Supabase...";
+            const { data, error } = await supabase.from('recetas').insert([{ nombre: n, categoria: c }]).select();
             
             if(!error) {
-                document.getElementById('mensaje').innerText = "✅ Legado Protegido.";
-                this.bIng = []; this.bPasos = [];
+                document.getElementById('msg').innerText = "✅ Legado guardado con éxito.";
+                this.bIng = []; this.bPas = [];
                 this.init();
             }
+        },
+
+        filtrar() {
+            const t = document.getElementById('bus-nombre').value.toLowerCase();
+            UI.renderGrid(this.recetas.filter(r => r.nombre.toLowerCase().includes(t)));
         }
     };
 
-    // --- MOTOR DE INTERFAZ (HU7) ---
     const UI = {
         renderGrid(lista) {
-            const grid = document.getElementById('grid-recetas');
-            grid.innerHTML = lista.map(r => `
-                <div class="recipe-card" onclick="UI.ver('${r.id}')">
-                    <div style="font-size: 0.7rem; color: var(--primary);">${r.categoria}</div>
-                    <strong>${r.nombre}</strong>
+            const g = document.getElementById('grid-recetas');
+            g.innerHTML = lista.map(r => `
+                <div class="recipe-card" onclick="UI.show('${r.id}')">
+                    <span class="badge">${r.categoria}</span>
+                    <h3 style="margin: 10px 0 0 0;">${r.nombre}</h3>
                 </div>
             `).join('');
         },
 
-        renderBorradores() {
-            const li = document.getElementById('lista-ing');
-            const lp = document.getElementById('lista-pasos');
-            li.style.display = App.bIng.length ? 'block' : 'none';
-            lp.style.display = App.bPasos.length ? 'block' : 'none';
-            li.innerHTML = App.bIng.map(i => `• ${i.nombre} (${i.cantidad})`).join('<br>');
-            lp.innerHTML = App.bPasos.map(p => `• ${p.tipo} - ${p.tiempo}min`).join('<br>');
+        renderLists() {
+            document.getElementById('lista-ing').innerHTML = App.bIng.map(i => `<div class="item-row"><span>${i.nombre}</span><b>${i.cantidad} ${i.unidad}</b></div>`).join('');
+            document.getElementById('lista-pas').innerHTML = App.bPas.map(p => `<div class="item-row"><span>${p.tipo}</span><b>${p.tiempo} min</b></div>`).join('');
         },
 
-        ajustarCamposPaso() {
-            const tipo = document.getElementById('paso-tipo').value;
-            document.getElementById('paso-temp').style.display = ["Hornear", "Congelar", "Sofreír"].includes(tipo) ? 'block' : 'none';
-            document.getElementById('paso-intensidad').style.display = ["Amasar", "Sofreír"].includes(tipo) ? 'block' : 'none';
+        toggleCampos() {
+            const t = document.getElementById('pas-tipo').value;
+            document.getElementById('pas-temp').style.display = (t === "Hornear" || t === "Congelar") ? "block" : "none";
+            document.getElementById('pas-int').style.display = (t === "Vitrocerámica") ? "block" : "none";
         },
 
-        filtrar() {
-            const t = document.getElementById('buscadorNombre').value.toLowerCase();
-            App.recetas && this.renderGrid(App.recetas.filter(r => r.nombre.toLowerCase().includes(t)));
-        },
-
-        ver(id) {
+        show(id) {
             const r = App.recetas.find(x => x.id == id);
-            document.getElementById('app-view').style.display = 'none';
+            document.getElementById('main-view').style.display = 'none';
             document.getElementById('pantalla-completa').style.display = 'block';
-            document.getElementById('detalle-contenido').innerHTML = `<h2>${r.nombre}</h2><p>Categoría: ${r.categoria}</p>`;
+            document.getElementById('det-cont').innerHTML = `<h1>${r.nombre}</h1><p>Categoría: ${r.categoria}</p>`;
         },
 
-        cerrarDetalle() {
+        close() {
             document.getElementById('pantalla-completa').style.display = 'none';
-            document.getElementById('app-view').style.display = 'block';
+            document.getElementById('main-view').style.display = 'block';
         }
     };
 
