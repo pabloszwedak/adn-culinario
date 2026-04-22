@@ -134,13 +134,23 @@
         },
 
         addIng() {
-            const n = document.getElementById('ing-nom').value.trim();
-            const c = parseFloat(document.getElementById('ing-cant').value);
-            if(!n || isNaN(c) || c <= 0) return alert("⚠️ INGREDIENTE: Nombre y cantidad (>0) obligatorios.");
-            this.bIng.push({ nombre: n, cantidad: c, unidad: document.getElementById('ing-uni').value });
-            this.render();
-            document.getElementById('ing-nom').value = ""; document.getElementById('ing-cant').value = "";
-        },
+			const n = document.getElementById('ing-nom').value.trim();
+			const c = parseFloat(document.getElementById('ing-cant').value);
+			const u = document.getElementById('ing-uni').value;
+
+			// VALIDACIÓN HU3 REFORZADA
+			if (!n || isNaN(c) || c <= 0) {
+				alert("⚠️ ERROR HU3: La cantidad del ingrediente debe ser mayor a 0.");
+				return; // Detiene la inserción del -1
+			}
+
+			this.bIng.push({ nombre: n, cantidad: c, unidad: u });
+			this.render();
+			
+			// Limpieza de campos
+			document.getElementById('ing-nom').value = ""; 
+			document.getElementById('ing-cant').value = "";
+		}
 
         addPaso() {
             const d = document.getElementById('paso-desc').value.trim();
