@@ -90,6 +90,9 @@
 </div>
 
 <script>
+    const SB_URL = 'https://tsmbobfnvforggaajurw.supabase.co';
+    const SB_KEY = 'sb_publishable_z7-wVRQ1qGgPOHs6GIhDeg_A5L3wQD_';
+    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
     const App = {
         bIng: [], bPasos: [],
         init() { this.uiAjustar(); },
@@ -151,12 +154,21 @@
             if(!document.getElementById('rec-cat').value) return this.showError("CATEGORÍA REQUERIDA", "rec-cat");
             if(this.bIng.length === 0) return this.showError("AÑADA INGREDIENTES", "ing-nom");
             document.getElementById('msg').innerText = "⏳ GUARDANDO...";
-            setTimeout(() => {
-                document.getElementById('msg').innerText = "✅ Receta Guardada";
-                this.bIng = []; this.bPasos = []; document.getElementById('rec-nom').value = "";
-                document.getElementById('rec-cat').value = ""; this.render();
-                setTimeout(() => document.getElementById('msg').innerText = "", 5000);
-            }, 800);
+            const payload = {
+                nombre: document.getElementById('rec-nom').value.trim(),
+                categoria: document.getElementById('rec-cat').value,
+                ingredientes: this.bIng,
+                pasos: this.bPasos
+            };
+            const { error } = await supabaseClient.from('recetas').insert([payload]);
+            if (error) {
+                document.getElementById('msg').innerText = "";
+                return this.showError("ERROR AL GUARDAR: " + error.message, "rec-nom");
+            }
+            document.getElementById('msg').innerText = "✅ Receta Guardada";
+            this.bIng = []; this.bPasos = []; document.getElementById('rec-nom').value = "";
+            document.getElementById('rec-cat').value = ""; this.render();
+            setTimeout(() => document.getElementById('msg').innerText = "", 5000);
         }
     };
     App.init();
